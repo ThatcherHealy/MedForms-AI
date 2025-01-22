@@ -8,19 +8,29 @@ const tintColorDark = '#fff';
 
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    text: '#333333',            // Dark grey text for better readability
+    lightText: '#888',
+    background1: '#FFFFFF',     // White background for a clean look
+    background2: '#F7F7F7',     // Very light grey for subtle contrast
+    highlight: '#81C784',       // Soft Green
+    icon: '#121212',            
+    button: '#81C784',      
+    border: '#121212',    
+    inactiveButton: '#d3d3d3',
+    buttonText: 'white',
+    modeSwapperActive: '#4CAF50',
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    text: '#BDBDBD',            // Medium-light grey for primary text
+    lightText: '#757575',       // Subtle grey for secondary text (placeholder, etc.)
+    background1: '#121212',     // Very dark grey (close to black) for the main background
+    background2: '#1E1E1E',     // Slightly lighter dark grey for secondary background
+    highlight: '#81C784',       // Soft Green
+    icon: '#F7F7F7',            // White
+    button: '#81C784', 
+    border: '#757575',  
+    inactiveButton: '#2A2A2A',
+    buttonText: 'black',
+    modeSwapperActive: 'green',
   },
 };
