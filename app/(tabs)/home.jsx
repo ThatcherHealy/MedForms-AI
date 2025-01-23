@@ -7,8 +7,10 @@
   import { ThemeContext } from "../../contexts/ThemeContext";
   import FormInput from "@/Components/FormInput";
   import ModeSwapper from "@/Components/ModeSwapper";
+  import DateSelect from "@/Components/DateSelect";
   import KeyboardAvoidingContainer from "@/Components/KeyboardAvoidingContainer";
   import Ionicons from "@expo/vector-icons/Ionicons";
+  
 
   export default function Home() {
     
@@ -40,8 +42,8 @@
       warnings3: "",
 
       // 4 (Medical Leave of Absence Letter)
-      startDateOfLeave4: "",
-      endDateOfLeave4: "",
+      startDateOfLeave4: new Date(),
+      endDateOfLeave4: new Date(),
       reasonForMedicalLeave4: "",
       recommendationsForWorkModifications4: "",
 
@@ -58,13 +60,14 @@
 
       // 7 (Return-to-Work Letter)
       workOrSchool7: "Work",
-      returnDate7: "",
+      returnDate7: new Date(),
       patientStatusCondition7: "",
       restrictionsOrLimitations7: "",
 
       // 8 (Vaccination Status Letter)
       vaccineType8: "",
       vaccinationDates8: "",
+      vaccineBatch8: "",
 
       // 9 (Prescription Justification Letter)
       medicationRequested9: "",
@@ -190,6 +193,14 @@
           onModeChange={(newMode) => handleInputChange(valueKey, newMode === mode1 ? valueOption1 : valueOption2)}
           />
         );
+        const CreateDateSelect = (label, valueKey, required) => (
+          <DateSelect
+          label = {label}
+          value = {formValues[valueKey]}
+          onChange={(newDate) => handleInputChange(valueKey, newDate)}
+          required = {required}
+          />
+        );
         
 
       switch (index) { //                || means expandable  +- means optional     / means swappable
@@ -208,7 +219,7 @@
               {createInput("Patient Diagnosis", "Enter patient diagnosis (e.g. sleep apnea)", "patientDiagnosis2", true)}
               {createInput("Requested Treatment/Medication", "Enter requested treatment or medication (e.g. BiPAP machine)", "requestedTreatment2")}
               {createInput("Rationale for Treatment Necessity", "Enter rationale for treatment (e.g. The BiPAP machine will help maintain adequate oxygenation, prevent complications such as cardiovascular strain, and significantly improve my patient’s sleep quality and overall health.)", "rationaleForTreatment2")}
-              {createInput("Previous Attempted Treatments", "Enter previous attempted treatments and their results (e.g. CPAP therapy were unsuccessful due to patient intolerance and discomfort)", "previousTreatments2", false, false)}
+              {createInput("Previous Attempted Treatments", "Enter previously attempted treatments and their results (e.g. CPAP therapy were unsuccessful due to patient intolerance and discomfort)", "previousTreatments2", false, false)}
             </>
           );
         case "3": // Patient Instruction Letter             ||instructions
@@ -223,9 +234,9 @@
         case "4": // Medical Leave of Absence Letter
           return (
             <>
-              {createInput("Start Date of Leave", "Enter start date", "startDateOfLeave4", true)}
-              {createInput("Expected End Date of Leave", "Enter end date", "endDateOfLeave4")}
-              {createInput("Reason for Medical Leave", "Enter reason for leave (e.g. Patient is recovering from back surger)", "reasonForMedicalLeave4")}
+              {CreateDateSelect("Start Date of Leave", "startDateOfLeave4")}
+              {CreateDateSelect("Expected End Date of Leave", "endDateOfLeave4")}
+              {createInput("Reason for Medical Leave", "Enter reason for leave (e.g. Patient is recovering from back surgery)", "reasonForMedicalLeave4")}
               {createInput("Recommendations for Work Modifications", "Enter recommendations (e.g. Patient should avoid heavy lifting)", "recommendationsForWorkModifications4", false, false)}
             </>
           );
@@ -250,8 +261,8 @@
           return (
             <>
               {createModeSwapper("Work","School", "workOrSchool7", "Work", "School")}
-              {createInput("Return Date", "Enter return date", "returnDate7", true)}
-              {createInput("Patient Condition", "Enter the condition the patient recovered from: (e.g. pneumonia)", "patientStatusCondition7")}
+              {CreateDateSelect("Return Date", "returnDate7")}
+              {createInput("Patient Condition", "Enter the condition the patient recovered from: (e.g. pneumonia)", "patientStatusCondition7", true)}
               {createInput("Restrictions", "Enter restrictions (e.g. patient should avoid cold environments for two weeks)", "restrictionsOrLimitations7")}
             </>
           );
@@ -260,6 +271,7 @@
             <>
               {createInput("Vaccine Type", "Enter vaccine type (e.g. COVID-19 Vaccine - Pfizer)", "vaccineType8", true)}
               {createInput("Vaccination Dates", "Enter vaccination dates", "vaccinationDates8")}
+              {createInput("Vaccine Batch Number (if applicable)", "Enter batch number (e.g. #12345)", "vaccineBatch8", false, false)}
             </>
           );
         case "9": // Prescription Justification Letter
@@ -285,7 +297,7 @@
 
     // Check if all the fields for the selected section are filled
     const allFieldsFilled = relevantKeys.every((key) => 
-      formValues[key]?.trim().length > 0
+      formValues[key].toString()?.trim().length > 0
     );
 
     if(selected != "")

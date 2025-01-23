@@ -19,6 +19,7 @@ export const Colors = {
     inactiveButton: '#d3d3d3',
     buttonText: 'white',
     modeSwapperActive: '#4CAF50',
+    date: 'light',
   },
   dark: {
     text: '#BDBDBD',            // Medium-light grey for primary text
@@ -32,5 +33,6 @@ export const Colors = {
     inactiveButton: '#2A2A2A',
     buttonText: 'black',
     modeSwapperActive: 'green',
+    date: 'dark',
   },
 };

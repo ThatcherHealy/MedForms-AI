@@ -1,6 +1,6 @@
 import { createContext, useState } from 'react'
 import { Appearance } from 'react-native'
-import { Colors } from '../Constants/Colors'
+import { Colors } from '../constants/Colors'
 
 export const ThemeContext = createContext({})
 
@@ -12,9 +12,7 @@ export const ThemeProvider = ({ children }) => {
         : Colors.light
 
     return (
-        <ThemeContext.Provider value={{
-            colorScheme, setColorScheme, theme
-        }}>
+        <ThemeContext.Provider value={{colorScheme, setColorScheme, theme}}>
             {children}
         </ThemeContext.Provider>
     )
