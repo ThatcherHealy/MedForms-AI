@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import {ThemeContext} from "../contexts/ThemeContext";
 
 
-const ModeSwapper = ({ mode1, mode2, onModeChange }) => {
+const ModeSwapper = ({ mode1, mode2, onModeChange, value }) => {
 
     const { theme } = useContext(ThemeContext);
     const styles = createStyles(theme)
@@ -11,8 +11,15 @@ const ModeSwapper = ({ mode1, mode2, onModeChange }) => {
     const [currentMode, setCurrentMode] = useState(mode1); // Set the default mode passed in
 
     useEffect(() => {
+      if(value === mode1)
+      {
         setCurrentMode(mode1);
-    }, [mode1]);
+      }
+      else
+      {
+        setCurrentMode(mode2);
+      }
+    }, [value]);
 
   // Function to toggle modes
   const toggleMode = (isMode1) => {

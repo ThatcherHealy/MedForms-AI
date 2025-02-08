@@ -15,7 +15,7 @@ export default function Layout() {
           tabBarIcon: ({ focused, color, size }) => (
             <Ionicons name={focused ? 'home' : 'home-outline'} size={size} color={color} />
           ),
-          tabBarActiveTintColor: 'green',
+          tabBarActiveTintColor: '#7bbf5c',
           tabBarInactiveTintColor: theme.icon,
           tabBarLabel: 'Home',
           tabBarStyle: {
@@ -32,7 +32,7 @@ export default function Layout() {
           tabBarIcon: ({ focused, color, size }) => (
             <Ionicons name={focused ? 'settings-sharp' : 'settings-outline'} size={size} color={color} />
           ),
-          tabBarActiveTintColor: 'green',
+          tabBarActiveTintColor: '#7bbf5c',
           tabBarInactiveTintColor: theme.icon,
           tabBarLabel: 'Settings',
           tabBarStyle: {

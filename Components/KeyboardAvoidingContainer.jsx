@@ -14,8 +14,10 @@ const KeyboardAvoidingContainer = ({ children }) => {
       <KeyboardAwareScrollView
         keyboardShouldPersistTaps="never"
         enableOnAndroid={true}
+        showsHorizontalScrollIndicator={false} // Hide horizontal scroll bar
+        showsVerticalScrollIndicator={false}
+        horizontal={false} // Ensure horizontal scrolling is disabled
         contentContainerStyle={{
-          paddingHorizontal: 25, // Add horizontal padding
         }}
       >
         {children}

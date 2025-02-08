@@ -59,12 +59,16 @@ function createStyles(theme) {
     },
     date: {
       borderRadius: 5,
-      paddingRight: 5,
       fontFamily: 'QuicksandMedium',
       alignSelf: "center",
       color: theme.text,
+      minWidth: 135, // Ensure enough space for full month names
+      textAlign: 'center', // Keep the text centered
+      paddingHorizontal: 2,
     },
     dateInput: {
+      justifyContent: "center",
+      alignItems: "center",
       borderWidth: 1,
       borderRadius: 5,
       padding: 5,

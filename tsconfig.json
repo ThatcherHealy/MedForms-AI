@@ -14,6 +14,7 @@
     "**/*.ts",
     "**/*.tsx",
     "**/*.jsx",
+    "**/*.env",
     ".expo/types/**/*.ts",
     "app/home.tsx",
     "expo-env.d.ts"

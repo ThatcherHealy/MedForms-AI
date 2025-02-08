@@ -22,7 +22,7 @@ const FormInput = ({ label, placeholder, value, onChangeText, scrollAllowed = fa
 
   return (
     <View style = {styles.container}>
-      <Text style={styles.label}>
+      <Text style={[styles.label, {marginTop: label === "" ? 0 : 10}, {marginBottom: label === "" ? -15 : 5}]}>
         {label}
         {required && <Text style={{color: 'red'}}> *</Text>}
       </Text>

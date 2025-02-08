@@ -12,7 +12,8 @@ export const Colors = {
     lightText: '#888',
     background1: '#FFFFFF',     // White background for a clean look
     background2: '#F7F7F7',     // Very light grey for subtle contrast
-    highlight: '#81C784',       // Soft Green
+    highlight: '#7bbf5c',       // Soft Green
+    changingHighlight: '#7bbf5c',
     icon: '#121212',            
     button: '#81C784',      
     border: '#121212',    
@@ -20,13 +21,15 @@ export const Colors = {
     buttonText: 'white',
     modeSwapperActive: '#4CAF50',
     date: 'light',
+    headerImageSource: '../../assets/images/medforms ai font_blackpng.png',
   },
   dark: {
     text: '#BDBDBD',            // Medium-light grey for primary text
     lightText: '#757575',       // Subtle grey for secondary text (placeholder, etc.)
     background1: '#121212',     // Very dark grey (close to black) for the main background
     background2: '#1E1E1E',     // Slightly lighter dark grey for secondary background
-    highlight: '#81C784',       // Soft Green
+    highlight: '#7bbf5c',       // Soft Green
+    changingHighlight: '#7bbf5c',
     icon: '#F7F7F7',            // White
     button: '#81C784', 
     border: '#757575',  
@@ -34,5 +37,6 @@ export const Colors = {
     buttonText: 'black',
     modeSwapperActive: 'green',
     date: 'dark',
+    headerImageSource: '../../assets/images/medforms ai font.png',
   },
 };
