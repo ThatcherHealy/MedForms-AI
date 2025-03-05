@@ -1,5 +1,7 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
+constants/API_Keys.ts
+
 # dependencies
 node_modules/
 
@@ -35,5 +37,4 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-.env
 app-example

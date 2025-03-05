@@ -1,7 +1,7 @@
   import { Text, View, Image, TextInput, Pressable, StyleSheet, Dimensions, ActivityIndicator, ScrollView, Clipboard} from "react-native";
   import * as Font from 'expo-font';
   import { SafeAreaView } from "react-native-safe-area-context";
-  import { useState, useEffect, useMemo } from "react";
+  import { useState, useEffect, useMemo, useCallback } from "react";
   import {SelectList} from 'react-native-dropdown-select-list';
   import React, {useContext} from "react";
   import { ThemeContext } from "../../contexts/ThemeContext";
@@ -10,14 +10,21 @@
   import DateSelect from "@/Components/DateSelect";
   import KeyboardAvoidingContainer from "@/Components/KeyboardAvoidingContainer";
   import Ionicons from "@expo/vector-icons/Ionicons";
-  import OpenAI from "openai";
-  import { Colors } from "react-native/Libraries/NewAppScreen";
-  
-  
+  import { OPEN_AI_KEY } from "@/constants/API_Keys";
+  import OpenAI from "openai";  
+  import AsyncStorage from "@react-native-async-storage/async-storage";
+  import { useFocusEffect } from "@react-navigation/native"; 
+  import { app } from "@/firebaseSetup";
+  import {functions, httpsCallable} from "@/firebaseSetup"
 
   export default function Home() {
     const { theme } = useContext(ThemeContext);
     const styles = createStyles();
+
+    const [presetValues, setPresetValues] = useState({
+      contactInfo: "",
+      name: "",
+    });
 
     const [fontsLoaded, setFontsLoaded] = useState(false);
     const [selected, setSelected] = useState("");
@@ -28,13 +35,11 @@
     const [isEditable, setIsEditable] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
 
-    const [doseCount, setDoseCount] = useState(1);
     const [instructionCount, setInstructionCount] = useState(1);
     const [warningCount, setWarningCount] = useState(1);
     const [restrictionCount4, setRestrictionCount4] = useState(1);
     const [restrictionCount7, setRestrictionCount7] = useState(1);
 
-    
     const [formValues, setFormValues] = useState({
       // 1 (Insurance Appeal)
       deniedTreatment1: "",
@@ -99,16 +104,24 @@
       restrictions7_4: "",
       restrictions7_5: "",
 
-      // 8 (Vaccination Status Letter)
-      vaccine8: "",
-      vaccinationDate8_1: new Date(),
-      vaccinationDate8_2: new Date(),
-      vaccinationDate8_3: new Date(),
-      vaccinationDate8_4: new Date(),
-      vaccinationDate8_5: new Date(),
+      //8 Custom Letter
+      customPrompt8: "",
+
+      //Whatever you add here, remember to also add to resetFormValues()
     });
 
     const { colorScheme } = useContext(ThemeContext);
+
+    const fetchOpenAIKey = async () => {
+      try {
+        const getOpenAIKey = httpsCallable(functions, "getOpenAIKey"); // Cloud Function name
+        const response = await getOpenAIKey(); // Call function
+        return response.data.apiKey;
+      } catch (error) {
+        console.error("Error fetching OpenAI API key:", error);
+        return null;
+      }
+    };
     
     useEffect(() => {
       switch(selected) {
@@ -126,16 +139,35 @@
         break;
         case "7": {formValues["workOrSchool7"] === "Work" ? setSelectedFormName("Return to Work Letter") : setSelectedFormName("Return to School Letter")}
         break;
-        case "8": setSelectedFormName("Vaccination Status Letter")
+        case "8": setSelectedFormName("Custom Letter")
         break;
         default:
       setSelectedFormName("Insurance Appeal Letter");
       }      
     }, [selected, formValues]);
 
-//'.../assets/fonts/Quicksand-Medium.ttf'
-      //Loads Fonts
+    useFocusEffect(
+      useCallback(() => {
+    //Loads preset values from async storage
+    async function loadPresetValues() {
+      try {
+        const storedName = await AsyncStorage.getItem("name");
+        const storedContactInfo = await AsyncStorage.getItem("contactInfo");
+
+        setPresetValues({
+          name: storedName || "",
+          contactInfo: storedContactInfo || "",
+        });
+      } catch (error) {
+        console.error("Error loading preset values", error);
+      }
+    }
+    loadPresetValues();
+    }, [])
+  )
+
   useEffect(() => {
+    //Loads fonts
     async function loadFonts() {
       await Font.loadAsync({
         'QuicksandMedium': require("../../assets/fonts/Quicksand-Medium.ttf"),
@@ -163,7 +195,7 @@
     {key: '5', value: 'Referral Letter'},
     {key: '6', value: 'Disability Support Letter'},
     {key: '7', value: 'Return to Work/School Letter'},
-    {key: '8', value: 'Vaccination Status Letter'},
+    {key: '8', value: 'Custom Letter'},
   ];
 
     return (
@@ -172,21 +204,22 @@
 
     function renderScreens()
     {
-      if(!generated)
-      {
-        if(!fetching)
+        if(!generated)
         {
-          return renderMainScreen()
+          if(!fetching)
+          {
+            return renderMainScreen()
+          }
+          else
+          {
+            return renderGeneratingScreen()
+          }
         }
         else
         {
-          return renderGeneratingScreen()
+          return renderGeneratedForm()
         }
-      }
-      else
-      {
-        return renderGeneratedForm()
-      }
+      
     }
     function renderMainScreen()
     {
@@ -276,57 +309,57 @@
 
       return(
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.background1 }}>
-            <View style={[styles.header,{ marginLeft: 10}]}>
-                                     
-            <Pressable 
-              onPress={() => setGenerated(false)} 
-              style={{ alignSelf: 'flex-start', marginLeft: 5, flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}
-            >
-              <Ionicons name="arrow-back" size={30} color={theme.changingHighlight} />
-              <Text style={{ color: theme.changingHighlight, fontSize: 22, paddingHorizontal: 10,fontWeight: "bold",fontFamily: "QuicksandBold", paddingBottom:2}}>
-                Return to Document Selection
-              </Text>
-            </Pressable> 
 
-            </View>
-            <View style={{ flex: 1, backgroundColor: theme.background2, marginBottom: -40 }}>
-        <ScrollView 
-          contentContainerStyle={{flexGrow:1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.background2}} 
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >            
-              <View style={{ flex: 1, width: "100%", alignItems: 'center' , marginTop: 50}}>
-                <Text style={[styles.text, { fontSize: 28, alignItems: 'center', textAlign: "center", color: theme.icon, marginBottom: 15 }]}>
-                  {selectedFormName}
+            <View style={[styles.header,{ marginLeft: 10}]}>                                    
+              <Pressable 
+                onPress={() => setGenerated(false)} 
+                style={{ alignSelf: 'flex-start', marginLeft: 5, flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}
+              >
+                <Ionicons name="arrow-back" size={30} color={theme.changingHighlight} />
+                <Text style={{ color: theme.changingHighlight, fontSize: 22, paddingHorizontal: 10,fontWeight: "bold",fontFamily: "QuicksandBold", paddingBottom:2}}>
+                  Return to Document Selection
                 </Text>
-                <View style={{ flexDirection: 'column', width: "90%" }}>
-                  <TextInput
-                    multiline = {true}
-                    textAlignVertical='top'
-                    style={[styles.input, { height: 300 }]}
-                    value={response}
-                    onChangeText={setResponse}
-                    scrollEnabled={true}
-                    editable={true} //isEditable
-                    onFocus={handleFocus} // Set isTyping to true when focused
-                    onBlur={handleBlur} // Set isTyping to false when focus is lost
-                  />
-                </View>
+              </Pressable> 
+            </View>
 
-                <View style={{ flexDirection: "row", marginBottom: isTyping ? 500 : 50 }}>
-                  {/*<Pressable onPress={() => setIsEditable(!isEditable)} style={[styles.addSubtractButton, {paddingVertical: 5, paddingHorizontal: 5, minHeight: 40}]}>
-                    <Text style={{ color: theme.text, fontSize: 20, fontFamily: 'QuicksandMedium' }}>
-                      {isEditable ? "Save" : "Edit"}
-                    </Text>
-                  </Pressable>*/}
-                  <Pressable onPress={copy} style={[styles.addSubtractButton, {marginLeft: 10, paddingVertical: 5, paddingHorizontal: 5, minHeight: 40}]}>
-                    <Text style={{ color: theme.text, fontSize: 20, fontFamily: 'QuicksandMedium' }}>
-                      {"Copy"}
-                    </Text>
-                  </Pressable>
+            <View style={{ flex: 1, backgroundColor: theme.background2, marginBottom: -35 }}>
+              <ScrollView 
+                contentContainerStyle={{flexGrow:1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.background2}} 
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+              >            
+                <View style={{ flex: 1, width: "100%", alignItems: 'center' , marginTop: 50}}>
+                  <Text style={[styles.text, { fontSize: 28, alignItems: 'center', textAlign: "center", color: theme.icon, marginBottom: 15 }]}>
+                    {selectedFormName}
+                  </Text>
+                  <View style={{ flexDirection: 'column', width: "90%" }}>
+                    <TextInput
+                      multiline = {true}
+                      textAlignVertical='top'
+                      style={[styles.input, { height: 300 }]}
+                      value={response}
+                      onChangeText={setResponse}
+                      scrollEnabled={true}
+                      editable={true} //isEditable
+                      onFocus={handleFocus} // Set isTyping to true when focused
+                      onBlur={handleBlur} // Set isTyping to false when focus is lost
+                    />
+                  </View>
+                  
+                  <View style={{ flexDirection: "row", marginBottom: isTyping ? 500 : 50 }}>
+                    {/*<Pressable onPress={() => setIsEditable(!isEditable)} style={[styles.addSubtractButton, {paddingVertical: 5, paddingHorizontal: 5, minHeight: 40}]}>
+                      <Text style={{ color: theme.text, fontSize: 20, fontFamily: 'QuicksandMedium' }}>
+                        {isEditable ? "Save" : "Edit"}
+                      </Text>
+                    </Pressable>*/}
+                    <Pressable onPress={copy} style={[styles.addSubtractButton, {marginLeft: 10, paddingVertical: 5, paddingHorizontal: 5, minHeight: 40}]}>
+                      <Text style={{ color: theme.text, fontSize: 20, fontFamily: 'QuicksandMedium' }}>
+                        {"Copy"}
+                      </Text>
+                    </Pressable>
+                  </View>
                 </View>
-              </View>
-        </ScrollView>
+              </ScrollView>
         </View>
     </SafeAreaView>
     )}
@@ -477,7 +510,7 @@
           return (
             <>
               {createInput("Patient Condition", "Enter reason for referral (e.g. Chronic sinusitis)", "reasonForReferral5", true)}
-              {createInput("Relevant Medical History or Background", "Enter relevant history (e.g. Patient has recieved 12 months of antibiotics, but continues to experience significant symptoms)", "relevantMedicalHistory5", false, false)}
+              {createInput("Relevant Medical History or Background", "Enter relevant history (e.g. Patient has recieved 12 weeks of antibiotics, but continues to experience significant symptoms)", "relevantMedicalHistory5", false, false)}
               {createInput("Services Requested", "Enter services requested (e.g. Surgical intervention)", "servicesRequested5")}
             </>
           );
@@ -504,19 +537,12 @@
             {CreateAddButton("Add Restriction", 5, restrictionCount7, setRestrictionCount7, 'restrictions7_')}
             </>
           );
-        case "8": // Vaccination Status Letter
-        return (
-          <>
-            {createInput("Vaccine Type", "Enter vaccine type (e.g. COVID-19 Vaccine - Pfizer)", "vaccine8", true)}
-            {Array.from({ length: doseCount }, (_, idx) => (
-              <React.Fragment key={`dose-${idx}`}>
-                {CreateDateSelect(doseCount === 1 ? 'Vaccination Date' :`Date of Dose ${idx + 1}`, `vaccinationDate8_${idx + 1}`, idx === 0)}
-              </React.Fragment>
-            ))}
-            {CreateAddButton("Add Dose", 5, doseCount, setDoseCount, 'vaccinationDate8_')}
-            {/*createInput("Vaccine Batch Number (if applicable)", "Enter batch number (e.g. #12345)", "vaccineBatch8", false, false)*/}
-          </>
-        );
+          case "8": //Custom Letter
+            return (
+              <>
+              {createInput("Custom Prompt", "Enter prompt (e.g. Generate a non-compliance letter explaining that my patient with hypertension is refusing to be treated with Lisinopril)", "customPrompt8")}
+              </>
+            );
         default:
           return (
             null
@@ -546,8 +572,9 @@
             const prompt = createPrompt(selected)
             console.log(prompt)
             const aiResponse = await generateLetter(prompt);
-            setGenerated(true);
             setResponse(aiResponse);
+            setGenerated(true);
+            resetFormValues();
           }
         }}
         disabled={!allFieldsFilled} // Disable button if not all fields are filled
@@ -560,26 +587,34 @@
   }
   }
   
+  
   async function generateLetter(data)
   {
+    //Make sure it is only generated once
     if(fetching) return;
-
     setFetching(true)
 
     try{
         const prompt = data;
         const OpenAI = require("openai");
-        const part1 = "sk-proj-anP3bWue282a2_tqcAqyaM-WddksZmvwLw8O8wTOKEHn3dkMY"
-        const part2 = "A7VYt6i96EBOrhXPUZXIJrAiBT3BlbkFJOB-tSOmgYrEmSN5MpW_ahY6t"
-        const part3 = "ntHat7sph5-X1wjBSzL1EUllAPM8ESRhobvzld1elZkJz7pdwA"
-        const API_KEY = `${part1}${part2}${part3}`;
-        const openai = new OpenAI({apiKey: API_KEY});
+        const API_KEY = OPEN_AI_KEY;
+
+        const initializeOpenAI = async () => {
+          const apiKey = await fetchOpenAIKey();
+          if (!apiKey) {
+            console.error("Failed to fetch OpenAI API key.");
+            return null;
+          }
+          return new OpenAI({ apiKey });
+        };
+
+        const openai = await initializeOpenAI();
         const aiModel = "gpt-3.5-turbo";
     
         const aiSettings = [
           {
             role: "system",
-            content: "You are a helpful assistant who creates medical documents for clinicians"
+            content: "You are a helpful assistant who creates medical documents for clinicians. Your responses should be professional, precise, and concise."
           },
           {
             role: "user",
@@ -615,11 +650,83 @@
       "5": ["reasonForReferral5",  "servicesRequested5"],
       "6": ["patientCondition6", "requestedAccommodation6", "medicalJustificationForAccommodation6"],
       "7": ["returnDate7", "patientStatusCondition7"],
-      "8": ["vaccine8", "vaccinationDate8_1"],
+      "8": ["customPrompt8"],
     };
+    
 
     return keysMap[index] || [];
   }
+
+  function resetFormValues() {
+    setFormValues({
+      // 1 (Insurance Appeal)
+      deniedTreatment1: "",
+      patientCondition1: "",
+      previousTreatments1: "",
+      reasonForAppeal1: "",
+  
+      // 2 (Medical Necessity Letter)
+      patientDiagnosis2: "",
+      requestedTreatment2: "",
+      rationaleForTreatment2: "",
+      previousTreatments2: "",
+  
+      // 3 (Patient Instruction Letter)
+      conditionOrMedication3: "Condition",
+      patientConditionName3: "",
+      instructions3_1: "",
+      instructions3_2: "",
+      instructions3_3: "",
+      instructions3_4: "",
+      instructions3_5: "",
+      instructions3_6: "",
+      instructions3_7: "",
+      instructions3_8: "",
+      warnings3_1: "",
+      warnings3_2: "",
+      warnings3_3: "",
+      warnings3_4: "",
+      warnings3_5: "",
+      warnings3_6: "",
+      warnings3_7: "",
+      warnings3_8: "",
+  
+      // 4 (Medical Leave of Absence Letter)
+      startDateOfLeave4: new Date(),
+      endDateOfLeave4: new Date(),
+      reasonForMedicalLeave4: "",
+      restrictions4_1: "",
+      restrictions4_2: "",
+      restrictions4_3: "",
+      restrictions4_4: "",
+      restrictions4_5: "",
+  
+      // 5 (Referral Letter)
+      reasonForReferral5: "",
+      relevantMedicalHistory5: "",
+      servicesRequested5: "",
+  
+      // 6 (Disability Support Letter)
+      patientCondition6: "",
+      requestedAccommodation6: "",
+      medicalJustificationForAccommodation6: "",
+      durationOfSupport6: "",
+  
+      // 7 (Return-to-Work Letter)
+      workOrSchool7: "Work",
+      returnDate7: new Date(),
+      patientStatusCondition7: "",
+      restrictions7_1: "",
+      restrictions7_2: "",
+      restrictions7_3: "",
+      restrictions7_4: "",
+      restrictions7_5: "",
+
+      //8 Custom Letter
+      customPrompt8: "",
+    });
+  };
+
   function createPrompt(index)
   {
     let prompt = "";
@@ -857,62 +964,38 @@
 
         To Whom It May Concern,
 
-        [Patient's Name *In your output keep patient's name in square brackets*] has been medically cleared to return to ${formValues["workOrSchool7"]} starting [return date] following recovery from *${formValues['patientStatusCondition7']} - make lowercase*. [If things to avoid have been listed previously in this prompt, add them here]
+        [Patient's Name *In your output keep patient's name in square brackets*] has been medically cleared to return to ${formValues["workOrSchool7"]}*- lowercase*  starting [return date] following recovery from *${formValues['patientStatusCondition7']} - make lowercase*. [If things to avoid have been listed previously in this prompt, add them here]
 
         Please feel free to reach out for further information or clarification.
 
         Best regards,
         [Clinician's Name]`
       break;
-
       case "8":
         prompt = (
-        `Generate a Vaccination Status Letter confirming to whom it may concern that the patient has recieved the ${formValues['vaccine8']} vaccine, `
-      );
-      if(formValues[`vaccinationDate8_2`] === new Date())
-      {
-        prompt += `\n the vaccine was administered on ${formValues['vaccinationDate8_1'].toDateString()}`
-      }
-      else
-      {
-      for(let i =1; i<6; i++)
-        {
-           if(formValues[`vaccinationDate8_${i}`].toDateString() != new Date().toDateString())
-           {
-            prompt += `\ndose ${i} was administered on: ${formValues[`vaccinationDate8_${i}`].toDateString()}`
-           }
-        }
-        prompt += `\n\nUse this example letter as a guide:
-        
-        [Date]
-
-        To Whom It May Concern,
-
-        *Keep in the same paragraph*
-        {
-        This letter confirms that [Patient's Name *In your output keep patient's name in square brackets*] has received the [vaccine name]. 
-        
-        *If there was only one dose*
-        Our clinic administered their vaccination on [date].
-
-        *Else*
-        Dose 1 was administered on [date1], and dose 2 was administered on [date2]...
-        }
-
-        Sincerely,
-        [Clinician's Name]
-
-        *Example over*
-        `
-      }
+          `${formValues["customPrompt8"]}`
+        );
       break;
     }
     prompt += `
     \n\nEnsure the letter is professional, persuasive, concise, and follows proper formatting for clinician communications.
     *Today's date is ${new Date().toDateString()}, don't surround it with square brackets 
     *Format all dates like [full month] [day], [full year]. For example, change "Feb 08 2025" would become "February 8, 2025"
-    *Check through capitaliziation to make sure it all looks right since I'm plugging in variables that may have odd capitalization
     *Make sure the patient is never gendered and all references to them should be with [Patient's Name]`
+    
+    if(presetValues["name"] && presetValues["contactInfo"])
+    {
+      prompt += `Close the email with the name: ${presetValues["name"]}, and the clinic's contact info: ${presetValues["contactInfo"]}`
+    }
+    else
+    {
+      if(presetValues["name"])
+        prompt += `Close the email with the name: ${presetValues["name"]}`
+      if(presetValues["contactInfo"])
+        prompt += `Close the email with the clinic's contact info: ${presetValues["contactInfo"]}`
+    }
+    prompt += `\n\n`
+
     return prompt;
   }
 

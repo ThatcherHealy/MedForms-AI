@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "MedwriterPro",
-    "slug": "MedwriterPro",
+    "name": "MedFormsAI",
+    "slug": "MedFormsAI",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/MedFormsAI-AppIcon.png",
@@ -9,7 +9,13 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      
+      "supportsTablet": true,
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "bundleIdentifier": "com.ThatcherHealy.MedFormsAI",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -23,6 +29,8 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
       "expo-router",
       [
         "expo-splash-screen",
@@ -32,10 +40,26 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "aac52ee8-5d4b-41ac-b993-44995aa4e103"
+      }
     }
   }
 }

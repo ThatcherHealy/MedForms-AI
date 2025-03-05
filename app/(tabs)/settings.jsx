@@ -1,10 +1,16 @@
 import React, { useState, useEffect, useContext } from "react";
-import { View, Text, StyleSheet, Switch, SafeAreaView, TextInput, Keyboard } from "react-native";
+import { View, Text, StyleSheet, Switch, SafeAreaView, TextInput, Keyboard, ScrollView, ActivityIndicator, Pressable } from "react-native";
 import * as Font from "expo-font";
 import { ThemeContext } from "../../contexts/ThemeContext";
 import AsyncStorage from "@react-native-async-storage/async-storage"; // Import AsyncStorage
+import { auth } from "@/firebaseSetup";
+import { signOut } from "firebase/auth";
+import { useRouter } from "expo-router";  
 
 export default function Settings() {
+
+  const router = useRouter();
+  const user = auth.currentUser;
   const { colorScheme, setColorScheme, theme } = useContext(ThemeContext);
   const [fontsLoaded, setFontsLoaded] = useState(false);
   const styles = createStyles(theme);
@@ -61,6 +67,7 @@ export default function Settings() {
         } catch (error) {
           console.error("Error saving preset values", error);
         }
+        console.log( await AsyncStorage.getItem("name"))
       };
   
       savePresetValues();
@@ -98,8 +105,37 @@ export default function Settings() {
       <View style={styles.header}>
         <Text style={styles.headerText}>Settings</Text>
       </View>
+       <View style={{ flex: 1, backgroundColor: theme.background2, marginBottom: -35 }}>
+              <ScrollView 
+                contentContainerStyle={{flexGrow:1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.background2}} 
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+              >  
 
-      <View style={styles.lowerContainer}>
+      <View style={[styles.lowerContainer, {marginBottom: 250}]}>
+
+
+        <Text style={styles.themeLabel}>Account</Text>
+
+        <View style={[styles.toggleContainer, {flexDirection: "column"}]}>
+          <View style={[styles.toggleContainer, {borderRadius: 0, width: 340, paddingVertical: 0, paddingHorizontal: 10}]}>
+            <Text style={styles.settingText}>
+              Email
+            </Text>
+            <View style={{ flex: 1, alignItems: "flex-end" }}>
+              <Text style={[styles.settingText, {width: 250, color: theme.lightText, flexShrink: 1, textAlign: "right"}]}
+                        numberOfLines={1} 
+                        ellipsizeMode="middle"
+                        >
+                {user.email}
+              </Text>
+            </View>
+          </View>
+          <Pressable style={styles.logoutButton} onPress={handleSignOut}>
+              <Text style={styles.logoutText}>Log Out</Text>
+            </Pressable>
+        </View>
+
         <Text style={styles.themeLabel}>Theme</Text>
 
         <View style={styles.toggleContainer}>
@@ -117,6 +153,7 @@ export default function Settings() {
             onValueChange={toggleSwitch}
           />
         </View>
+
 
         <Text style={styles.themeLabel}>Presets</Text>
 
@@ -139,7 +176,7 @@ export default function Settings() {
           />
         </View>
 
-        <View style={styles.toggleContainer}>
+        <View style={[styles.toggleContainer]}>
           <Text style={[styles.settingText, { alignSelf: "flex-start", paddingTop: 5 }]}>
             Clinic Contact Information
           </Text>
@@ -156,16 +193,26 @@ export default function Settings() {
             placeholderTextColor={theme.lightText}
             scrollEnabled={true}
             value={presetValues.contactInfo}
-            returnKeyType="done"
-            onKeyPress={handleKeyPress}
             onChangeText={(text) =>
-              handleInputChange("contactInfo", text.replace(/\n/g, ""))
+              handleInputChange("contactInfo", text)
             }
           />
         </View>
       </View>
+      </ScrollView>
+      </View>
     </SafeAreaView>
   );
+
+  async function handleSignOut() {
+    try {
+      await signOut(auth);
+      console.log("✅ User signed out");
+      router.replace("/login"); // Redirect to login screen
+    } catch (error) {
+      console.error("❌ Sign out error:", error.message);
+    }
+  }
 }
 
 function createStyles(theme) {
@@ -232,6 +279,22 @@ function createStyles(theme) {
       flexGrow: 1,
       maxWidth: "60%",
       flexShrink: 1,
+    },
+    logoutButton: {
+      backgroundColor: theme.background2, // Soft red for contrast
+      paddingHorizontal: 15,
+      borderRadius: 5,
+      marginTop: 10, // Ensures spacing below email
+      alignSelf: "center", // Aligns with email text
+      height: 30,
+      justifyContent: "center",
+    },
+    
+    logoutText: {
+      color: theme.text,
+      fontSize: 16,
+      fontFamily: "QuicksandMedium",
+      alignSelf: "center",
     },
   });
 }

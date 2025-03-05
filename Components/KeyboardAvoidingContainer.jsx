@@ -10,7 +10,7 @@ const KeyboardAvoidingContainer = ({ children }) => {
   const { theme } = useContext(ThemeContext);
   
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff",justifyContent: 'flex-start', alignItems: 'center', backgroundColor: theme.background2, paddingBottom: -35}}>
+    <SafeAreaView style={{ flex: 1,justifyContent: 'flex-start', alignItems: 'center', backgroundColor: theme.background2, paddingBottom: -35}}>
       <KeyboardAwareScrollView
         keyboardShouldPersistTaps="never"
         enableOnAndroid={true}
