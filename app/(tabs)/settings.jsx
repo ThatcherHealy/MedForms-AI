@@ -6,6 +6,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage"; // Import 
 import { auth } from "@/firebaseSetup";
 import { signOut } from "firebase/auth";
 import { useRouter } from "expo-router";  
+import { Colors } from "react-native/Libraries/NewAppScreen";
+import { ManageSubscription} from "@/RevenueCatConfig";
 
 export default function Settings() {
 
@@ -131,9 +133,16 @@ export default function Settings() {
               </Text>
             </View>
           </View>
-          <Pressable style={styles.logoutButton} onPress={handleSignOut}>
-              <Text style={styles.logoutText}>Log Out</Text>
-            </Pressable>
+            <View style={{flexDirection: "row", justifyContent: "space-between", marginTop: 10}}>
+            <Pressable style={[styles.logoutButton]} onPress={handleManageSubscription}>
+                <Text style={styles.logoutText}>Manage Subscription</Text>
+              </Pressable>
+
+              <Pressable style={[styles.logoutButton, { marginLeft: 20}]} onPress={handleSignOut}>
+                <Text style={styles.logoutText}>Log Out</Text>
+              </Pressable>
+
+            </View>
         </View>
 
         <Text style={styles.themeLabel}>Theme</Text>
@@ -211,6 +220,14 @@ export default function Settings() {
       router.replace("/login"); // Redirect to login screen
     } catch (error) {
       console.error("❌ Sign out error:", error.message);
+    }
+  }
+
+  async function handleManageSubscription() {
+    try {
+      await ManageSubscription();
+    } catch (error) {
+      console.error("❌ Manage subscription error:", error.message);
     }
   }
 }

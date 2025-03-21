@@ -10,7 +10,6 @@
   import DateSelect from "@/Components/DateSelect";
   import KeyboardAvoidingContainer from "@/Components/KeyboardAvoidingContainer";
   import Ionicons from "@expo/vector-icons/Ionicons";
-  import { OPEN_AI_KEY } from "@/constants/API_Keys";
   import OpenAI from "openai";  
   import AsyncStorage from "@react-native-async-storage/async-storage";
   import { useFocusEffect } from "@react-navigation/native"; 
@@ -148,15 +147,15 @@
 
     useFocusEffect(
       useCallback(() => {
-    //Loads preset values from async storage
+    // Loads preset values from async storage
     async function loadPresetValues() {
       try {
         const storedName = await AsyncStorage.getItem("name");
         const storedContactInfo = await AsyncStorage.getItem("contactInfo");
 
         setPresetValues({
-          name: storedName || "",
-          contactInfo: storedContactInfo || "",
+          name: storedName !== null ? storedName : "",
+          contactInfo: storedContactInfo !== null ? storedContactInfo : "",
         });
       } catch (error) {
         console.error("Error loading preset values", error);
@@ -597,7 +596,6 @@
     try{
         const prompt = data;
         const OpenAI = require("openai");
-        const API_KEY = OPEN_AI_KEY;
 
         const initializeOpenAI = async () => {
           const apiKey = await fetchOpenAIKey();
@@ -614,7 +612,7 @@
         const aiSettings = [
           {
             role: "system",
-            content: "You are a helpful assistant who creates medical documents for clinicians. Your responses should be professional, precise, and concise."
+            content: "You are an AI clinician's assistant who creates medical documents for clinicians. Your responses should be professional, precise, and concise."
           },
           {
             role: "user",
@@ -762,7 +760,7 @@
       case "2":
       prompt = (
         `Generate a Medical Necesssity Letter to provide medical justification to use ${formValues["requestedTreatment2"]}
-        for a patient with ${formValues["patientDiagnosis2"]}. The rationale for treatment necessity is: "${formValues["rationaleForTreatment2"]}"`
+        for a patient with ${formValues["patientDiagnosis2"]}. Because: "${formValues["rationaleForTreatment2"]}"`
       );
       if(formValues["previousTreatments2"] != "")
         {
@@ -776,7 +774,7 @@
         To Whom It May Concern,
 
         I am writing to provide medical justification for the use of [requested treatment] for my patient diagnosed with [patient diagnosis]. 
-        [provide the rationale, including previously attempted treatments if they exist]
+        [provide the rationale, including previously attempted treatments if they exist, but skipping not including them if no previous treatments were attempted].
 
         Please do not hesitate to reach out for additional information or clarification.
 
@@ -978,10 +976,14 @@
       break;
     }
     prompt += `
-    \n\nEnsure the letter is professional, persuasive, concise, and follows proper formatting for clinician communications.
+    \n\n
+    Rules -
+    *Ensure the letter is professional, persuasive, concise, and follows proper formatting for clinician communications.
     *Today's date is ${new Date().toDateString()}, don't surround it with square brackets 
     *Format all dates like [full month] [day], [full year]. For example, change "Feb 08 2025" would become "February 8, 2025"
-    *Make sure the patient is never gendered and all references to them should be with [Patient's Name]`
+    *Make sure the patient is never gendered and all references to them should be with [Patient's Name]
+    *Don't follow the outlines too closesly, prioritize clarity over strictly sticking to a preset form
+    `
     
     if(presetValues["name"] && presetValues["contactInfo"])
     {
