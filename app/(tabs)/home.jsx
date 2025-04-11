@@ -15,9 +15,15 @@
   import { useFocusEffect } from "@react-navigation/native"; 
   import { app } from "@/firebaseSetup";
   import {functions, httpsCallable} from "@/firebaseSetup"
+  import { useWindowDimensions } from 'react-native';
 
   export default function Home() {
     const { theme } = useContext(ThemeContext);
+    const { width, height } = useWindowDimensions();
+    const scaleFactor = useMemo(() => width / 390, [width]);
+    const scaleFontSize = (size, scaleFactor) => {
+      return size * scaleFactor; // Return the scaled font size
+    };
     const styles = createStyles();
 
     const [presetValues, setPresetValues] = useState({
@@ -231,12 +237,12 @@
               data={dropdownData} 
               setSelected={setSelected}
               fontFamily='QuicksandMedium'
-              maxHeight={dropdownData.length * 36.25}
+              maxHeight={dropdownData.length * 38 * scaleFactor}
               placeholder="Select a Document Type"
 
               boxStyles={{
-                width: 300, 
-                height: 70, 
+                width: width * 0.7, 
+                height: height * 0.09, 
                 paddingVertical: 22,
                 justifyContent: 'center',
                 alignItems: 'center',
@@ -244,19 +250,15 @@
                 backgroundColor: theme.background1,
               }}
 
-              dropdownTextStyles={{color: theme.text}}
+              dropdownTextStyles={{color: theme.text, fontSize: scaleFontSize(16, scaleFactor)}}
               dropdownStyles={{backgroundColor: theme.background1, borderColor: theme.border}}
-             searchPlaceholder=""
+              searchPlaceholder=""
 
-              inputStyles={{
-                fontSize: 18,
-                color: theme.text, // Darker text color for the search input
-                fontFamily: 'QuicksandMedium',
-              }}
+              inputStyles={styles.dropdownText}
 
-              arrowicon={<Ionicons name="chevron-down" size={20} color={theme.text} style = {{marginLeft: 10, paddingTop: 3}}/>}
-              searchicon={<Ionicons name="search" size={16} color={theme.icon}  style = {{marginRight: 5}} />}
-              closeicon={<Ionicons name="close" size={20} color={theme.icon} />}
+              arrowicon={<Ionicons name="chevron-down" size = {scaleFontSize(20, scaleFactor)} color={theme.text} style = {styles.dropdownDownIcon}/>}
+              searchicon={<Ionicons name="search" size={scaleFontSize(16, scaleFactor)} color={theme.icon}  style = {{marginRight: 5}} />}
+              closeicon={<Ionicons name="close" size={scaleFontSize(20, scaleFactor)} color={theme.icon} />}
 
             />
           </View>
@@ -271,14 +273,7 @@
             </View>
 
             <View style={{ alignItems: 'center', marginTop: 1 }}>
-              <Text style={{ 
-                color: 'orange', 
-                fontSize: 12, 
-                fontFamily: 'QuicksandMedium', 
-                textAlign: 'center', 
-                padding: 10, 
-                maxWidth: 300 
-              }}>
+              <Text style={styles.neverEnterText}>
                 Never enter personally identifiable information into MedForms AI.
               </Text>
             </View>
@@ -314,8 +309,8 @@
                 onPress={() => setGenerated(false)} 
                 style={{ alignSelf: 'flex-start', marginLeft: 5, flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}
               >
-                <Ionicons name="arrow-back" size={30} color={theme.changingHighlight} />
-                <Text style={{ color: theme.changingHighlight, fontSize: 22, paddingHorizontal: 10,fontWeight: "bold",fontFamily: "QuicksandBold", paddingBottom:2}}>
+                <Ionicons name="arrow-back" size={scaleFontSize(30, scaleFactor)} color={theme.changingHighlight} />
+                <Text style={{ color: theme.changingHighlight, fontSize: scaleFontSize(22, scaleFactor), paddingHorizontal: 10,fontWeight: "bold",fontFamily: "QuicksandBold", paddingBottom:2}}>
                   Return to Document Selection
                 </Text>
               </Pressable> 
@@ -328,7 +323,7 @@
                 showsVerticalScrollIndicator={false}
               >            
                 <View style={{ flex: 1, width: "100%", alignItems: 'center' , marginTop: 50}}>
-                  <Text style={[styles.text, { fontSize: 28, alignItems: 'center', textAlign: "center", color: theme.icon, marginBottom: 15 }]}>
+                  <Text style={[styles.text, { fontSize: scaleFontSize(28, scaleFactor), fontWeight: "bold",fontFamily: "QuicksandBold", alignItems: 'center', textAlign: "center", color: theme.icon, marginBottom: 15 }]}>
                     {selectedFormName}
                   </Text>
                   <View style={{ flexDirection: 'column', width: "90%" }}>
@@ -351,9 +346,9 @@
                         {isEditable ? "Save" : "Edit"}
                       </Text>
                     </Pressable>*/}
-                    <Pressable onPress={copy} style={[styles.addSubtractButton, {marginLeft: 10, paddingVertical: 5, paddingHorizontal: 5, minHeight: 40}]}>
-                      <Text style={{ color: theme.text, fontSize: 20, fontFamily: 'QuicksandMedium' }}>
-                        {"Copy"}
+                    <Pressable onPress={copy} style={[styles.addSubtractButton, {marginLeft: 10, paddingVertical: 10, paddingHorizontal: 10, minHeight: 40}]}>
+                      <Text style={{ color: theme.text, fontSize: scaleFontSize(20, scaleFactor), fontFamily: 'QuicksandMedium' }}>
+                        Copy
                       </Text>
                     </Pressable>
                   </View>
@@ -368,7 +363,7 @@
     }
       
       function renderInputForms(index) {
-        const createInput = (label, placeholder, valueKey, scrollAllowed, required) => (
+        const createInput = (label, placeholder, valueKey, scrollAllowed, required, scalable) => (
           <FormInput
             label={label}
             placeholder={placeholder}
@@ -376,6 +371,7 @@
             onChangeText={(text) => handleInputChange(valueKey, text.replace(/\n/g, ''))}
             scrollAllowed={scrollAllowed}
             required = {required}
+            scalable = {scalable}
           />
         );
         const createModeSwapper = (mode1, mode2, valueKey, valueOption1, valueOption2) => (
@@ -406,8 +402,8 @@
             }}
           >
             <View style={{alignItems: 'center', justifyContent: 'center', flexDirection: 'row',}}>
-              <Ionicons name="add" size={16} color={theme.text} />
-              <Text style={{ color: theme.text, fontSize: 12, marginLeft: 1, fontFamily: 'QuicksandMedium', }}>
+              <Ionicons name="add" size={scaleFontSize(16, scaleFactor)} color={theme.text} />
+              <Text style={{ color: theme.text, fontSize: scaleFontSize(12, scaleFactor), marginLeft: 1, fontFamily: 'QuicksandMedium', }}>
                 {label}
               </Text>
             </View>
@@ -424,7 +420,7 @@
             }}
           >
             <View style={{alignItems: 'center', justifyContent: 'center', flexDirection: 'row',}}>
-              <Ionicons name="remove" size={16} color={theme.text} />
+              <Ionicons name="remove" size={scaleFontSize(16, scaleFactor)} color={theme.text} />
             </View>
           </Pressable>
           )
@@ -529,8 +525,8 @@
               {CreateDateSelect("Return Date", "returnDate7")}
               {createInput("Patient Condition", "Enter the condition the patient recovered from: (e.g. pneumonia)", "patientStatusCondition7", true)}
               {Array.from({ length: restrictionCount7 }, (_, idx) => (
-              <React.Fragment key={`restriction7-${idx}`}>
-                {createInput(idx === 0 ? "Restrictions" : "", "Enter restrictions (e.g. patient should avoid cold environments for two weeks)", `restrictions7_${idx + 1}`, false, false)}
+              <React.Fragment key={`restriction7-${idx}` }>
+                {createInput(idx === 0 ? "Restrictions" : "", "Enter restrictions (e.g. patient should avoid cold environments for two weeks)", `restrictions7_${idx + 1}`, false, false, true)}
               </React.Fragment>
             ))}
             {CreateAddButton("Add Restriction", 5, restrictionCount7, setRestrictionCount7, 'restrictions7_')}
@@ -743,7 +739,9 @@
            prompt += `\n${formValues["reasonForAppeal1"]} is the reason for the appeal`
         }
 
-        prompt += `\n\nUse this example letter as a guide:
+        
+
+        /*prompt += `\n\nUse this example letter as a guide:
         [Date]
 
         To Whom It May Concern,
@@ -751,10 +749,11 @@
         I am writing to formally appeal the denial of [Denied Treatment] for my patient with [patient condition]. 
         [Make an argument for why the treatment should be approved using the reason for appeal and previously attempted treatments if provided].
 
+
         Thank you for reconsidering this request. Please feel free to contact me for additional information.
 
         Sincerely,
-        [Clinician's Name]`
+        [Clinician's Name]`*/
       break;
 
       case "2":
@@ -767,7 +766,7 @@
           prompt += `\nMention that ${formValues["previousTreatments2"]} were attempted but ineffective`
         }
 
-        prompt += `\n\nUse this example letter as a guide:
+        /*prompt += `\n\nUse this example letter as a guide:
         
         [Date]
 
@@ -779,7 +778,7 @@
         Please do not hesitate to reach out for additional information or clarification.
 
         Sincerely,
-        [Clinician's Name]`
+        [Clinician's Name]`*/
       break;
 
       case "3":
@@ -805,7 +804,7 @@
                  }
             }
 
-            prompt += `\n\nUse this example letter as a guide:
+            /*prompt += `\n\nUse this example letter as a guide:
             [Date]
 
             Dear [Patient's Name],
@@ -820,7 +819,7 @@
             [Kind message that fits with the letter]
 
             Best regards,
-            [Clinician's Name]`
+            [Clinician's Name]`*/
         }
         else
         {
@@ -836,7 +835,7 @@
                }
             }
 
-            prompt += `\n\nUse this example letter as a guide:
+            /*prompt += `\n\nUse this example letter as a guide:
             [Date]
 
             Dear [Patient's Name],
@@ -846,7 +845,7 @@
             [Kind message that fits with the letter]
 
             Best regards,
-            [Clinician's Name]`
+            [Clinician's Name]`*/
         }
         
       break;
@@ -871,7 +870,7 @@
              }
           }}
 
-       prompt += `\n\nUse this example letter as a guide:
+       /*prompt += `\n\nUse this example letter as a guide:
        [Date]
 
       To Whom It May Concern,
@@ -883,7 +882,7 @@
       Thank you for your understanding.
 
       Sincerely,
-      [Clinician's Name]`
+      [Clinician's Name]`*/
       break;
 
       case "5":
@@ -896,7 +895,7 @@
           prompt += `\nMention the patient's relevant history: ${formValues["relevantMedicalHistory5"]}`
         }
 
-        prompt += `\n\nUse this example letter as a guide:
+        /*prompt += `\n\nUse this example letter as a guide:
         
         [Date]
 
@@ -909,7 +908,7 @@
         Please contact me for further information.
 
         Best regards,
-        [Clinician's Name]`
+        [Clinician's Name]`*/
       break;
 
       case "6":
@@ -918,7 +917,7 @@
         for a patient with ${formValues["patientCondition6"]}. The justification is: ${formValues['medicalJustificationForAccommodation6']}`
       );
 
-        prompt += `\n\nUse this example letter as a guide. Word everything in a way that flows correctly
+        /*prompt += `\n\nUse this example letter as a guide. Word everything in a way that flows correctly
         [Date]
 
         To Whom It May Concern,
@@ -928,7 +927,7 @@
         Thank you for your consideration.
 
         Sincerely,
-        [Clinician's Name]`
+        [Clinician's Name]`*/
 
         if(formValues["durationOfSupport6"] != "")
           {
@@ -956,7 +955,7 @@
            }
         }}
 
-        prompt += `\n\nUse this example letter as a guide:
+        /*prompt += `\n\nUse this example letter as a guide:
         
         [Date]
 
@@ -967,7 +966,7 @@
         Please feel free to reach out for further information or clarification.
 
         Best regards,
-        [Clinician's Name]`
+        [Clinician's Name]`*/
       break;
       case "8":
         prompt = (
@@ -975,30 +974,30 @@
         );
       break;
     }
+
+    if(presetValues["name"] && presetValues["contactInfo"])
+      {
+        prompt += `\nClose the email with the name: ${presetValues["name"]}, and the clinic's contact info: ${presetValues["contactInfo"]}`
+      }
+      else
+      {
+        if(presetValues["name"])
+          prompt += `\nClose the email with the name: ${presetValues["name"]}`
+        if(presetValues["contactInfo"])
+          prompt += `\nClose the email with the clinic's contact info: ${presetValues["contactInfo"]}`
+      }
+
+    console.log("Here")
     prompt += `
     \n\n
-    Rules -
+    *Rules -
     *Ensure the letter is professional, persuasive, concise, and follows proper formatting for clinician communications.
-    *Today's date is ${new Date().toDateString()}, don't surround it with square brackets 
+    *Today's date is ${new Date().toDateString()}, place it at the top of the letter 
     *Format all dates like [full month] [day], [full year]. For example, change "Feb 08 2025" would become "February 8, 2025"
     *Make sure the patient is never gendered and all references to them should be with [Patient's Name]
-    *Don't follow the outlines too closesly, prioritize clarity over strictly sticking to a preset form
+    *Keep your response as short as the letter allows.
     `
-    
-    if(presetValues["name"] && presetValues["contactInfo"])
-    {
-      prompt += `Close the email with the name: ${presetValues["name"]}, and the clinic's contact info: ${presetValues["contactInfo"]}`
-    }
-    else
-    {
-      if(presetValues["name"])
-        prompt += `Close the email with the name: ${presetValues["name"]}`
-      if(presetValues["contactInfo"])
-        prompt += `Close the email with the clinic's contact info: ${presetValues["contactInfo"]}`
-    }
-    prompt += `\n\n`
-
-    return prompt;
+    return prompt
   }
 
   function createStyles() {
@@ -1010,14 +1009,14 @@
         backgroundColor: '#fff',
       },
       logoImage: {
-        height: 100,
-        width: 350,
+        height: height * 0.11,
+        width:  width * 0.9,
         resizeMode: 'contain', //Allow image to ignore its aspect ratio
       },
       text:{
         fontFamily: 'QuicksandMedium',
         paddingHorizontal: 30,
-        fontSize: 18,
+        fontSize: scaleFontSize(18, scaleFactor),
         marginTop: 10,
         marginBottom: 5,
         color: theme.text,
@@ -1025,10 +1024,27 @@
       highlightText:{
         fontFamily: 'QuicksandMedium',
         paddingHorizontal: 30,
-        fontSize: 18,
+        fontSize: scaleFontSize(18, scaleFactor),
         marginTop: 10,
         marginBottom: 5,
         color: theme.changingHighlight
+      },
+      neverEnterText: {
+        color: 'orange', 
+        fontSize: scaleFontSize(12, scaleFactor), 
+        fontFamily: 'QuicksandMedium', 
+        textAlign: 'center', 
+        padding: 10, 
+        maxWidth: width * 0.75 
+      },
+      dropdownText: {
+        fontSize: scaleFontSize(16, scaleFactor),
+        color: theme.text, // Darker text color for the search input
+        fontFamily: 'QuicksandMedium',
+      },
+      dropdownDownIcon: {
+        marginLeft: 10,
+        paddingTop: 3,
       },
       button: {
         backgroundColor: '#4CAF50', // Green background
@@ -1039,7 +1055,7 @@
         alignItems: 'center', // Center text horizontally
         justifyContent: 'center', // Center text vertically
         width: 'auto', // Allow the button to adjust its width based on content
-        minWidth: 150, // Set a minimum width to ensure button is wide enough
+        minWidth: width * 0.5, // Set a minimum width to ensure button is wide enough
         flexDirection: 'row', // Align text horizontally
         textAlign: 'center', // Ensure text is centered
       },
@@ -1051,14 +1067,14 @@
         marginTop: 20, // Space between input fields and button
         alignItems: 'center', // Center text horizontally
         justifyContent: 'center', // Center text vertically
-        width: 1000, // Allow the button to adjust its width based on content
-        minWidth: 150, // Set a minimum width to ensure button is wide enough
+        width: 'auto', // Allow the button to adjust its width based on content
+        minWidth: width * 0.5, // Set a minimum width to ensure button is wide enough
         flexDirection: 'row', // Align text horizontally
         textAlign: 'center', // Ensure text is centered
       },
       buttonText: {
         color: theme.buttonText, // White text color
-        fontSize: 18,
+        fontSize: scaleFontSize(18, scaleFactor),
         fontFamily: 'QuicksandMedium',
       },
       scrollView: {
@@ -1067,17 +1083,17 @@
       },
       addSubtractButton: {
         backgroundColor: theme.background1,
-        borderWidth: 1,
+        borderWidth: width > 400 ? 2 : 1,
         borderColor: theme.border,
         borderRadius: 5,
         paddingHorizontal: 5, // Add padding for dynamic width
-        height: 30, // Fixed height
+        height: height * 0.05, // Fixed height
         alignItems: 'center',
         justifyContent: 'center',
         marginTop: 3,
        },
        input: {
-        borderWidth: 1,
+        borderWidth: width > 400 ? 2 : 1,
         borderColor: theme.border,
         borderRadius: 5,
         padding: 10,
@@ -1093,7 +1109,7 @@
         fontWeight: "bold",
       },
       headerText: {
-        fontSize: 32,
+        fontSize: scaleFontSize(32, scaleFactor),
         fontWeight: "bold",
         fontFamily: "QuicksandBold",
         color: theme.text,

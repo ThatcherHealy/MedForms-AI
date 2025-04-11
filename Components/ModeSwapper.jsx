@@ -1,12 +1,17 @@
-import React, { useState, useEffect, useContext } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import React, { useState, useEffect, useContext, useMemo } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, useWindowDimensions } from "react-native";
 import {ThemeContext} from "../contexts/ThemeContext";
 
 
 const ModeSwapper = ({ mode1, mode2, onModeChange, value }) => {
 
     const { theme } = useContext(ThemeContext);
-    const styles = createStyles(theme)
+    const { width, height } = useWindowDimensions();
+      const scaleFactor = useMemo(() => width / 390, [width]);
+      const scaleFontSize = (size, scaleFactor) => {
+          return size * scaleFactor; // Return the scaled font size
+        };
+    const styles = createStyles(theme, width, height, scaleFontSize, scaleFactor)
 
     const [currentMode, setCurrentMode] = useState(mode1); // Set the default mode passed in
 
@@ -59,7 +64,7 @@ const ModeSwapper = ({ mode1, mode2, onModeChange, value }) => {
   );
 };
 
-function createStyles(theme) {
+function createStyles(theme, width, height, scaleFontSize, scaleFactor) {
     return StyleSheet.create({
   container: {
     alignItems: "center",
@@ -72,15 +77,15 @@ function createStyles(theme) {
   },
   buttonContainer: {
     flexDirection: "row",
-      width: "75%", // Ensure the pill stretches across the container
-      height: 50, // Set the height of the pill container
+      width: width * 0.65, // Ensure the pill stretches across the container
+      height: height * 0.06, // Set the height of the pill container
       backgroundColor: theme.background1, // Background color of the pill (unselected state)
       borderRadius: 25, // Make the container pill-shaped
       overflow: "hidden", // Hide overflow to make rounded edges
       borderWidth: 1,
       borderColor: theme.border,
       marginTop: 10,
-      marginBottom: 20,
+      marginBottom: 15,
   },
   button: {
     paddingVertical: 12,
@@ -96,10 +101,10 @@ function createStyles(theme) {
   },
   buttonText: {
     color: theme.text,
-    fontSize: 16,
+    fontSize: scaleFontSize(16, scaleFactor),
   },
   selectedMode: {
-    fontSize: 16,
+    fontSize: scaleFontSize(16, scaleFactor),
     color: theme.text,
   },
 });

@@ -1,12 +1,17 @@
-import React, { useState, useContext, useEffect } from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import React, { useState, useContext, useEffect, useMemo } from 'react'
+import { StyleSheet, Text, View, useWindowDimensions } from 'react-native'
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {ThemeContext} from "../contexts/ThemeContext";
 
 const DateSelect = ({label, value, onChange, required = true}) => {
 
   const { theme } = useContext(ThemeContext);
-  const styles = createStyles(theme);
+      const { width, height } = useWindowDimensions();
+        const scaleFactor = useMemo(() => width / 390, [width]);
+        const scaleFontSize = (size, scaleFactor) => {
+            return size * scaleFactor; // Return the scaled font size
+          };
+  const styles = createStyles(theme, width, height, scaleFontSize, scaleFactor);
   const today = new Date();
 
   const handleDateChange = (event, selectedDate) => {
@@ -40,29 +45,29 @@ const DateSelect = ({label, value, onChange, required = true}) => {
   </View>
   )
 }
-function createStyles(theme) {
+function createStyles(theme, width, height, scaleFontSize, scaleFactor) {
   return StyleSheet.create({
     container: {
-      width: 320, // Set width for the container
+      width: width * 0.75, // Set width for the container
       marginBottom: 5,
     },
     label: {
       fontFamily: 'QuicksandMedium',
-      fontSize: 14,
+      fontSize: scaleFontSize(14, scaleFactor),
       marginBottom: 5,
       marginTop: 10,
       color: theme.text,
       alignSelf: 'center',
       textAlign: 'center',
       flexWrap: 'wrap',
-      maxWidth: 320,
+      maxWidth: width * 0.75,
     },
     date: {
       borderRadius: 5,
       fontFamily: 'QuicksandMedium',
       alignSelf: "center",
       color: theme.text,
-      minWidth: 135, // Ensure enough space for full month names
+      minWidth: width * 0.34, // Ensure enough space for full month names
       textAlign: 'center', // Keep the text centered
       paddingHorizontal: 2,
     },

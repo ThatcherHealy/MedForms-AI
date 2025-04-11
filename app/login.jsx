@@ -1,7 +1,7 @@
 import { ThemeContext } from "../contexts/ThemeContext";
-import { View, Text, StyleSheet, Modal, SafeAreaView, TextInput, Keyboard, ScrollView, Pressable, ActivityIndicator, Image } from "react-native";
+import { View, Text, StyleSheet, Modal, SafeAreaView, TextInput, Keyboard, ScrollView, Pressable, ActivityIndicator, Image, useWindowDimensions } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useContext, useState, useEffect } from "react";
+import { useContext, useState, useEffect, useMemo } from "react";
 import { useNavigation } from "expo-router";
 import { app, auth } from "@/firebaseSetup";
 import {createUserWithEmailAndPassword, signInWithEmailAndPassword} from "firebase/auth";
@@ -29,7 +29,12 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
     const [customerInfo, setCustomerInfo] = useState(null);
     const [subscriptionPackage, setSubscriptionPackage] = useState(null);
 
-    const styles = createStyles(theme);    
+      const { width, height } = useWindowDimensions();
+      const scaleFactor = useMemo(() => width / 390, [width]);
+      const scaleFontSize = (size, scaleFactor) => {
+         return size * scaleFactor; // Return the scaled font size
+      };
+    const styles = createStyles(theme, width, height, scaleFontSize, scaleFactor);    
 
     //Just removes the header
     const navigation = useNavigation();
@@ -58,12 +63,19 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
     // Check Auth Status
       auth.onAuthStateChanged(async (user) => {
         if (user) {
-          console.log("✅ User is signed in:", user.email);
-          await logInToRevenueCatAndUpdateInfo(auth.currentUser.uid);
-  
-          if(await hasActiveSubscription(customerInfo))
+
+          await logInToRevenueCatAndUpdateInfo(user.uid); 
+          const customerInfo = await getCustomerInfo(user.uid);
+          const subscribed = await hasActiveSubscription(customerInfo);
+
+          if(subscribed)
           {
+            console.log("✅ User is signed in and subscribed:", user.email);
             router.replace("/home");
+          }
+          else
+          {
+            console.log("User is signed in but not subscribed:", user.email);
           }
         } else {
           console.log("⚠️ No user signed in");
@@ -100,6 +112,7 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
 
     return(
     <>
+    <View style = {{backgroundColor: theme.background2, flex: 1}}>
         <SafeAreaView style = {styles.upperContainer}>
           <Image source = {colorScheme === 'dark' ? require('../assets/images/medforms ai font.png') : require('../assets/images/medforms ai font_blackpng.png') } style = {styles.logoImage}/>
         </SafeAreaView>
@@ -110,7 +123,7 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
             <View style={styles.inputContainer}>
         <Text style={styles.label}>Email</Text>
         <TextInput
-          style={[styles.input, { color: email ? theme.text : theme.lightText }]}
+          style={[styles.input, { color: email ? theme.text : theme.lightText, fontSize: scaleFontSize(14, scaleFactor)  }]}
           placeholder="Enter your email"
           placeholderTextColor={theme.lightText}
           value={email}
@@ -123,7 +136,7 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Password</Text>
         <TextInput
-          style={[styles.input, { color: password ? theme.text : theme.lightText }]}
+          style={[styles.input, { color: password ? theme.text : theme.lightText, fontSize: scaleFontSize(14, scaleFactor) }]}
           placeholder="Enter your password"
           placeholderTextColor={theme.lightText}
           secureTextEntry
@@ -168,7 +181,7 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
           <Ionicons
             style={{position: 'absolute', top: 15, right: 15, color: theme.lightText}}
             name="close-circle-outline"
-            size= {30}
+            size= {scaleFontSize(30, scaleFactor)}
             onPress={() => setShowModal(false)}
           ></Ionicons>
 
@@ -199,6 +212,7 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
       </Modal>
 
 
+    </View>
     </View>
     </>
     );
@@ -325,7 +339,7 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
         alert('No subscription package found.');
         return;
       }
-  
+      try{
       setLoading(true);
       newInfo = await purchaseSubscription(subscriptionPackage);
       console.log(`Active subscription status: ${newInfo.entitlements.active["Medforms AI"] ? "active" : "inactive"}`);
@@ -342,6 +356,14 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
       {
         alert('Subscription failed or was cancelled.');
       }
+    }
+    catch (error) {
+      console.error('❌ Subscription error:', error.message);
+    }
+    finally
+    {
+      setLoading(false);
+    }
     };
 
     async function handleRestorePurchases()
@@ -396,7 +418,7 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
     
 }
 
-function createStyles(theme = {}) {
+function createStyles(theme, width, height, scaleFontSize, scaleFactor) {
   return StyleSheet.create({
     container: {
         flex: 1,
@@ -411,14 +433,14 @@ function createStyles(theme = {}) {
         backgroundColor: theme.background2,
       },
       logoImage: {
-        height: 100,
-        width: 350,
+        height: height * 0.11,
+        width:  width * 0.9,
         resizeMode: 'contain', //Allow image to ignore its aspect ratio
         marginTop: 50,
         marginBottom: 50,
       },
       title: {
-        fontSize: 48, // Increased size
+        fontSize: scaleFontSize(48, scaleFactor), // Increased size
         fontWeight: "bold",
         fontFamily: "QuicksandBold",
         color: theme.text,
@@ -429,21 +451,22 @@ function createStyles(theme = {}) {
 
       },
       inputContainer: {
-        width: 320,
+        width: width * 0.75,
         marginBottom: 15,
       },
       label: {
-        fontSize: 18,
+        fontSize: scaleFontSize(18, scaleFactor),
         fontFamily: "QuicksandBold",
         color: theme.text,
         marginBottom: 5,
         marginLeft: 10,
         alignSelf: "flex-start",
         textAlign: "center",
-        maxWidth: 320,
+        maxWidth: width * 0.7,
       },
       input: {
-        borderWidth: 1,
+        borderWidth: width > 400 ? 2 : 1,
+        height: height * 0.05,
         borderColor: theme.lightText,
         borderRadius: 5,
         padding: 10,
@@ -459,13 +482,13 @@ function createStyles(theme = {}) {
         alignItems: 'center', // Center text horizontally
         justifyContent: 'center', // Center text vertically
         width: 'auto', // Allow the button to adjust its width based on content
-        minWidth: 200, // Set a minimum width to ensure button is wide enough
+        minWidth: width * 0.5, // Set a minimum width to ensure button is wide enough
         flexDirection: 'row', // Align text horizontally
         textAlign: 'center', // Ensure text is centered
       },
       buttonText: {
         color: theme.buttonText, // White text color
-        fontSize: 18,
+        fontSize: scaleFontSize(18, scaleFactor),
         fontFamily: 'QuicksandMedium',
       },
       footer: {
@@ -475,7 +498,7 @@ function createStyles(theme = {}) {
         alignContent: "space-between",
       },
       footerText: {
-        fontSize: 16,
+        fontSize: scaleFontSize(16, scaleFactor),
         fontFamily: "QuicksandMedium",
         color: theme.lightText,
       },
@@ -483,6 +506,7 @@ function createStyles(theme = {}) {
         color: theme.highlight, // Use the primary text color for emphasis
         textDecorationLine: "underline",
         fontFamily: "QuicksandMedium",
+        fontSize: scaleFontSize(14, scaleFactor),
       },
       modalContainer: {
         flex: 1,
@@ -499,7 +523,7 @@ function createStyles(theme = {}) {
         elevation: 10,
       },
       modalTitle: {
-        fontSize: 22,
+        fontSize: scaleFontSize(22, scaleFactor),
         marginTop: 20,
         marginBottom: 20,
         color: theme.text, 
@@ -507,7 +531,7 @@ function createStyles(theme = {}) {
         textAlign: 'center',
       },
       modalText: {
-        fontSize: 16,
+        fontSize: scaleFontSize(16, scaleFactor),
         marginBottom: 10,
         textAlign: 'center',
         color: theme.text, 
@@ -529,13 +553,13 @@ function createStyles(theme = {}) {
         marginBottom: 40,
       },
       perk: {
-        fontSize: 16,
+        fontSize: scaleFontSize(16, scaleFactor),
         marginBottom: 12,
         color: theme.text,
         fontFamily: "QuicksandMedium",
       },
       modalSubTitle: {
-        fontSize: 18,
+        fontSize: scaleFontSize(18, scaleFactor),
         marginBottom: 20,
         color: theme.lightText,
         fontFamily: "QuicksandMedium",

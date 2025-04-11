@@ -15,9 +15,9 @@ const firebaseConfig = {
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 
 // Initialize Auth only once
-const auth = initializeAuth(app, {
+const auth = initializeAuth(app/*, {
   persistence: getReactNativePersistence(AsyncStorage),
-});
+}*/);
 
 //Get Functions
 const functions = getFunctions(app);

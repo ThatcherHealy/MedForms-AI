@@ -1,12 +1,11 @@
-import React, { useState, useEffect, useContext } from "react";
-import { View, Text, StyleSheet, Switch, SafeAreaView, TextInput, Keyboard, ScrollView, ActivityIndicator, Pressable } from "react-native";
+import React, { useState, useEffect, useContext, useMemo } from "react";
+import { View, Text, StyleSheet, Switch, SafeAreaView, TextInput, Keyboard, ScrollView, useWindowDimensions, Pressable } from "react-native";
 import * as Font from "expo-font";
 import { ThemeContext } from "../../contexts/ThemeContext";
 import AsyncStorage from "@react-native-async-storage/async-storage"; // Import AsyncStorage
 import { auth } from "@/firebaseSetup";
 import { signOut } from "firebase/auth";
 import { useRouter } from "expo-router";  
-import { Colors } from "react-native/Libraries/NewAppScreen";
 import { ManageSubscription} from "@/RevenueCatConfig";
 
 export default function Settings() {
@@ -15,7 +14,12 @@ export default function Settings() {
   const user = auth.currentUser;
   const { colorScheme, setColorScheme, theme } = useContext(ThemeContext);
   const [fontsLoaded, setFontsLoaded] = useState(false);
-  const styles = createStyles(theme);
+  const { width, height } = useWindowDimensions();
+  const scaleFactor = useMemo(() => width / 390, [width]);
+  const scaleFontSize = (size, scaleFactor) => {
+     return size * scaleFactor; // Return the scaled font size
+  };
+  const styles = createStyles(theme, width, height, scaleFontSize, scaleFactor);
   const [presetValues, setPresetValues] = useState({
     contactInfo: "",
     name: "",
@@ -114,18 +118,18 @@ export default function Settings() {
                 showsVerticalScrollIndicator={false}
               >  
 
-      <View style={[styles.lowerContainer, {marginBottom: 250}]}>
+      <View style={[styles.lowerContainer, {marginBottom: 400}]}>
 
 
         <Text style={styles.themeLabel}>Account</Text>
 
         <View style={[styles.toggleContainer, {flexDirection: "column"}]}>
-          <View style={[styles.toggleContainer, {borderRadius: 0, width: 340, paddingVertical: 0, paddingHorizontal: 10}]}>
+          <View style={[styles.toggleContainer, {borderRadius: 0, width: width * 0.8, paddingVertical: 0, paddingHorizontal: 10}]}>
             <Text style={styles.settingText}>
               Email
             </Text>
             <View style={{ flex: 1, alignItems: "flex-end" }}>
-              <Text style={[styles.settingText, {width: 250, color: theme.lightText, flexShrink: 1, textAlign: "right"}]}
+              <Text style={[styles.settingText, {width: width * 0.7, color: theme.lightText, flexShrink: 1, textAlign: "right"}]}
                         numberOfLines={1} 
                         ellipsizeMode="middle"
                         >
@@ -149,9 +153,16 @@ export default function Settings() {
 
         <View style={styles.toggleContainer}>
           <Text style={styles.settingText}>
-            {colorScheme === "dark" ? "Dark Mode" : "Light Mode"}
+            Dark Mode
           </Text>
           <Switch
+            style={{
+              transform: [
+                { scaleX: 1 * scaleFactor },
+                { scaleY: 1 * scaleFactor },
+              ],
+              marginRight: width > 400 ? 15 * scaleFactor : 0
+            }}
             trackColor={{
               false: theme.background1,
               true: theme.highlight,
@@ -232,7 +243,7 @@ export default function Settings() {
   }
 }
 
-function createStyles(theme) {
+function createStyles(theme, width, height, scaleFontSize, scaleFactor) {
   return StyleSheet.create({
     container: {
       flex: 1,
@@ -252,14 +263,14 @@ function createStyles(theme) {
       fontWeight: "bold",
     },
     headerText: {
-      fontSize: 32,
+      fontSize: scaleFontSize(32, scaleFactor),
       fontWeight: "bold",
       fontFamily: "QuicksandBold",
       color: theme.text,
       marginLeft: 25,
     },
     themeLabel: {
-      fontSize: 18,
+      fontSize: scaleFontSize(18, scaleFactor),
       color: "#81C784", // Green color for the "Theme" label
       fontWeight: "bold",
       marginTop: 20,
@@ -276,13 +287,14 @@ function createStyles(theme) {
       borderRadius: 25,
       marginLeft: 15,
       marginRight: 5,
-      width: 360,
+      width: width * 0.85,
     },
     settingText: {
-      fontSize: 18,
+      fontSize: scaleFontSize(18, scaleFactor),
       color: theme.text,
       fontFamily: "QuicksandMedium",
-      width: 150,
+      width: width * 0.4,
+      marginLeft: 5
     },
     input: {
       borderWidth: 1,
@@ -291,6 +303,7 @@ function createStyles(theme) {
       padding: 10,
       marginBottom: 5,
       fontFamily: "QuicksandMedium",
+      fontSize: scaleFontSize(14, scaleFactor),
       color: theme.lightText,
       backgroundColor: theme.background1,
       flexGrow: 1,
@@ -303,13 +316,13 @@ function createStyles(theme) {
       borderRadius: 5,
       marginTop: 10, // Ensures spacing below email
       alignSelf: "center", // Aligns with email text
-      height: 30,
+      height: height * 0.04,
       justifyContent: "center",
     },
     
     logoutText: {
       color: theme.text,
-      fontSize: 16,
+      fontSize: scaleFontSize(16, scaleFactor),
       fontFamily: "QuicksandMedium",
       alignSelf: "center",
     },

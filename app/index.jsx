@@ -6,7 +6,7 @@ import { useEffect } from "react";
 const StartPage = () => {
 
     useEffect(() => {
-        initializeRevenueCat();
+        //initializeRevenueCat();
       }, []);
 
     return <Redirect href={`./login`} />;
