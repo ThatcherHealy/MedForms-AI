@@ -21,6 +21,7 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
     const [loggedIn, setLoggedIn] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [user, setUser] = useState();
     const [showModal, setShowModal] = useState(false);
@@ -147,6 +148,8 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
         {displayForgotPassword()}
       </View>
 
+      {displayConfirmPassword()}
+
        <Pressable
               style={[
                 styles.button,
@@ -182,7 +185,9 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
             style={{position: 'absolute', top: 15, right: 15, color: theme.lightText}}
             name="close-circle-outline"
             size= {scaleFontSize(30, scaleFactor)}
-            onPress={() => setShowModal(false)}
+            onPress={() => {
+              setShowModal(false)
+              deleteAccount()}}
           ></Ionicons>
 
             <Text style={styles.modalTitle}>Start your MedForms AI subscription!</Text>
@@ -198,7 +203,7 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
           </View>
 
           <Pressable style={styles.continueButton} onPress={() => handleSubscribe()}>
-              <Text style={[styles.buttonText, {fontFamily: 'QuicksandBold'}]}>Continue</Text>
+              <Text style={[styles.buttonText, {fontFamily: 'QuicksandBold'}]}>Subscribe</Text>
             </Pressable>
             <Pressable style={[styles.continueButton, { backgroundColor: "transparent", paddingHorizontal: 5}]} onPress={() => handleRestorePurchases()}>
               <Text style={[styles.buttonText, { color: theme.lightText}]}>Restore Purchases</Text>
@@ -226,14 +231,27 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
           </Text>
         )
       }
-      else
-      {
-        return(
-          <Text style={[styles.signUpText, {alignSelf: "center", marginTop: 5}]}>
-            
-          </Text>
-        )
-      }
+    }
+
+    function displayConfirmPassword(){
+      if(signUp)
+        {
+          return(
+      <View style={styles.inputContainer}>
+      <Text style={styles.label}>Confirm Password</Text>
+      <TextInput
+        style={[styles.input, { color: password ? theme.text : theme.lightText, fontSize: scaleFontSize(14, scaleFactor) }]}
+        placeholder="Enter the same password"
+        placeholderTextColor={theme.lightText}
+        secureTextEntry
+        value={confirmPassword}
+        onChangeText={setConfirmPassword}
+        returnKeyType="done"
+      />
+      {displayForgotPassword()}
+    </View>
+          )
+        }
     }
 
     async function handleSignUp() {
@@ -241,12 +259,15 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
         alert("Please enter both email and password.");
         return;
       }
+      else if (password !== confirmPassword) {
+        alert("Passwords do not match.");
+        return;
+      }
     
       try {
         setLoading(true);
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         console.log("✅ Account created:", userCredential.user.email);
-        alert("Account created successfully!");
     
         // Sign in user automatically after sign-up
         setUser(userCredential.user);
@@ -267,6 +288,9 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
         }
         else if (error.code === 'auth/invalid-email') {
           alert('That email address is invalid!');
+        }
+        else if (error.code === 'auth/weak-password') {
+          alert('Password must contain at least 6 characters.');
         }
         else
         {
@@ -332,6 +356,21 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
         console.error("❌ Password reset error:", error.message);
       }
     }
+    async function deleteAccount() {
+      let payingUser = false;
+      if(await hasActiveSubscription(customerInfo))
+        {
+          payingUser = true;
+        }
+      if (user && !payingUser) {
+        try {
+          await user.delete();
+          console.log('🗑️ Deleted user account due to no subscription.');
+        } catch (deleteError) {
+          console.log('❌ Failed to delete user:', deleteError.message);
+        }
+      }
+    }
 
     async function  handleSubscribe() {
       
@@ -342,7 +381,6 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
       try{
       setLoading(true);
       newInfo = await purchaseSubscription(subscriptionPackage);
-      console.log(`Active subscription status: ${newInfo.entitlements.active["Medforms AI"] ? "active" : "inactive"}`);
       setCustomerInfo(newInfo);
       setLoading(false);
   
@@ -355,10 +393,12 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
       else 
       {
         alert('Subscription failed or was cancelled.');
+        deleteAccount();
       }
     }
     catch (error) {
       console.error('❌ Subscription error:', error.message);
+      deleteAccount();
     }
     finally
     {

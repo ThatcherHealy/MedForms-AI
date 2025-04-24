@@ -208,7 +208,7 @@ export default function Settings() {
               { color: presetValues.contactInfo ? theme.text : theme.lightText },
             ]}
             placeholder={
-              "Dr. John Smith \nMD, ENT Specialist \nHealthy Life Clinic \n123 Wellness Avenue \nSpringfield, IL 62704 \nPhone: (555) 123-4567 \nFax: (555) 123-8901 \nEmail: dr.jane.smith@healthylifeclinic.com"
+              "Healthy Life Clinic \n123 Wellness Avenue \nSpringfield, IL 62704 \nPhone: (555) 123-4567 \nFax: (555) 123-8901 \nEmail: dr.jane.smith@healthylifeclinic.com"
             }
             placeholderTextColor={theme.lightText}
             scrollEnabled={true}
@@ -238,7 +238,7 @@ export default function Settings() {
     try {
       await ManageSubscription();
     } catch (error) {
-      console.error("❌ Manage subscription error:", error.message);
+      console.error("There was an error reaching your subscription. Navigate to it through Settings App > Apple Account > Subscriptions.");
     }
   }
 }

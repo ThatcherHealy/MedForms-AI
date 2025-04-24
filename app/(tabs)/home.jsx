@@ -37,7 +37,7 @@
     const [fetching, setFetching] = useState(false);
     const [generated, setGenerated] = useState(false);
     const [response, setResponse] = useState("");
-    const [isEditable, setIsEditable] = useState(false);
+    const [formHeightLimited, setFormHeightLimited] = useState(true);
     const [isTyping, setIsTyping] = useState(false);
 
     const [instructionCount, setInstructionCount] = useState(1);
@@ -117,6 +117,14 @@
 
     const { colorScheme } = useContext(ThemeContext);
 
+    const storeReturnForm = async (value) => {
+      try {
+        await AsyncStorage.setItem('ReturnForm', value);
+      } catch (e) {
+        console.error('Failed to save the data to the storage', e);
+      }
+    };
+
     const fetchOpenAIKey = async () => {
       try {
         const getOpenAIKey = httpsCallable(functions, "getOpenAIKey"); // Cloud Function name
@@ -127,6 +135,24 @@
         return null;
       }
     };
+
+    useEffect(() => {
+      const checkMyVariable = async () => {
+        try {
+          // Retrieve 'ReturnForm' from AsyncStorage
+          const storedValue = await AsyncStorage.getItem('ReturnForm');
+          
+          if (storedValue !== null) {
+            setSelected(storedValue);
+          }
+        } catch (e) {
+          console.error('Failed to load the data from storage', e);
+        }
+      };
+  
+      // Run the check when the component mounts
+      checkMyVariable();
+    }, []);
     
     useEffect(() => {
       switch(selected) {
@@ -148,7 +174,8 @@
         break;
         default:
       setSelectedFormName("Insurance Appeal Letter");
-      }      
+      } 
+      storeReturnForm(selected);
     }, [selected, formValues]);
 
     useFocusEffect(
@@ -233,21 +260,23 @@
           <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 20 }}>
           <Image source = {colorScheme === 'dark' ? require('../../assets/images/medforms ai font.png') : require('../../assets/images/medforms ai font_blackpng.png') } style = {styles.logoImage}/>
             <SelectList 
+            
               style={{ alignItems: 'center', justifyContent: 'center', marginTop: 20 }}
               data={dropdownData} 
               setSelected={setSelected}
               fontFamily='QuicksandMedium'
               maxHeight={dropdownData.length * 38 * scaleFactor}
-              placeholder="Select a Document Type"
+              placeholder={selected ? dropdownData.find(item => item.key === selected)?.value : "Select a Document Type"}
 
               boxStyles={{
                 width: width * 0.7, 
-                height: height * 0.09, 
+                height: height * 0.101, 
                 paddingVertical: 22,
                 justifyContent: 'center',
                 alignItems: 'center',
                 borderColor: theme.border,
                 backgroundColor: theme.background1,
+                alignSelf: 'center',
               }}
 
               dropdownTextStyles={{color: theme.text, fontSize: scaleFontSize(16, scaleFactor)}}
@@ -330,7 +359,7 @@
                     <TextInput
                       multiline = {true}
                       textAlignVertical='top'
-                      style={[styles.input, { height: 300 }]}
+                      style={[styles.input, { height: formHeightLimited ? 300  : "auto"}]}
                       value={response}
                       onChangeText={setResponse}
                       scrollEnabled={true}
@@ -340,18 +369,26 @@
                     />
                   </View>
                   
-                  <View style={{ flexDirection: "row", marginBottom: isTyping ? 500 : 50 }}>
-                    {/*<Pressable onPress={() => setIsEditable(!isEditable)} style={[styles.addSubtractButton, {paddingVertical: 5, paddingHorizontal: 5, minHeight: 40}]}>
-                      <Text style={{ color: theme.text, fontSize: 20, fontFamily: 'QuicksandMedium' }}>
-                        {isEditable ? "Save" : "Edit"}
-                      </Text>
-                    </Pressable>*/}
-                    <Pressable onPress={copy} style={[styles.addSubtractButton, {marginLeft: 10, paddingVertical: 10, paddingHorizontal: 10, minHeight: 40}]}>
-                      <Text style={{ color: theme.text, fontSize: scaleFontSize(20, scaleFactor), fontFamily: 'QuicksandMedium' }}>
-                        Copy
+                  <View style={{ flexDirection: "column", marginBottom: 0, alignItems: "center" }}>
+                    <Ionicons 
+                    onPress={() => setFormHeightLimited(!formHeightLimited)} 
+                    name= {formHeightLimited ? "chevron-down-outline" : "chevron-up-outline"} 
+                    size={scaleFontSize(30, scaleFactor)} color={theme.text}
+                    style = {{marginBottom: 5, marginTop: -5}}>
+                    </Ionicons>
+
+                    <Pressable onPress={copy} style={[styles.addSubtractButton, {paddingVertical: 10, paddingHorizontal: 30, minHeight: 50}]}>
+                      <Text style={{ color: theme.text, fontSize: scaleFontSize(22, scaleFactor), fontFamily: 'QuicksandMedium' }}>
+                        {"Copy"}
                       </Text>
                     </Pressable>
                   </View>
+                  <View style={{ alignItems: 'center', marginTop: 1, marginBottom: isTyping ? 500 : 50}}>
+                      <Text style={styles.neverEnterText}>
+                      MedForms AI is not responsible for the documents it generates. Never send a document without first reading it through
+                    </Text>
+                </View>
+
                 </View>
               </ScrollView>
         </View>
@@ -570,6 +607,7 @@
             setResponse(aiResponse);
             setGenerated(true);
             resetFormValues();
+            setFormHeightLimited(true);
           }
         }}
         disabled={!allFieldsFilled} // Disable button if not all fields are filled
@@ -603,7 +641,7 @@
         };
 
         const openai = await initializeOpenAI();
-        const aiModel = "gpt-3.5-turbo";
+        const aiModel = "gpt-4o";
     
         const aiSettings = [
           {
@@ -726,7 +764,7 @@
     let prompt = "";
     switch(index){
       case "1":
-        prompt = (
+        /*prompt = (
           `Generate an Insurance Appeal Letter for a clinician that is appealing the 
           use of ${formValues["deniedTreatment1"]} for a patient with ${formValues["patientCondition1"]}.`
         );
@@ -737,7 +775,54 @@
         if(formValues["reasonForAppeal1"] != "")
         {
            prompt += `\n${formValues["reasonForAppeal1"]} is the reason for the appeal`
-        }
+        }*/
+
+        prompt = (
+          `
+You are a board-certified medical specialist generating a formal letter of medical necessity or insurance appeal. Use the structured patient and treatment information provided below to write a professional, persuasive letter appropriate for submission to a health insurance company.
+
+
+
+Use condition-aware logic based on the specialty and diagnosis provided. Integrate relevant details such as:
+
+
+
+FDA approval status and indications of the requested treatment
+Mechanism of action and how it differs from previously tried treatments
+Pharmacological interactions or safety concerns, especially if the patient is on other therapies
+Specialty-specific standards of care or clinical guidelines (e.g., APA for psychiatry, ACC/AHA for cardiology, NCCN for oncology, etc.)
+Why the insurance-preferred treatment is not appropriate or may pose clinical risk
+
+
+
+
+Format the letter as follows:
+
+
+
+Date and provider header
+Patient demographics: name, DOB, insurance ID
+Summary of condition and clinical context
+List of previous treatments and outcomes (including intolerances, lack of efficacy, or contraindications)
+Clinical justification for the requested treatment including pharmacology, safety, and relevance to the patient’s current regimen
+Formal closing paragraph requesting approval or reconsideration, and offering to provide further documentation or peer-to-peer review
+
+
+
+
+Do not use complex formatting. Use clean, professional language suitable for copy/paste into an EHR, fax, or portal. Leave placeholders for date, provider name, and contact info to make editing easier.
+
+
+
+Structured Inputs Provided:
+
+
+
+Patient Condition: ${formValues["patientCondition1"]}
+Treatments Tried and Outcomes: ${formValues["previousTreatments1"]}
+Current Medications or Treatment Plan: ${formValues["deniedTreatment1"]}
+Insurance Denial Reason: ${formValues["reasonForAppeal1"]}`
+        );
 
         
 

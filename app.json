@@ -4,7 +4,7 @@
     "slug": "MedFormsAI",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/MedFormsAI-AppIcon.png",
+    "icon": "./assets/images/NewMedFormsAILogo.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
