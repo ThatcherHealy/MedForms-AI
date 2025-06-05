@@ -5,7 +5,7 @@ import { Colors } from '../constants/Colors'
 export const ThemeContext = createContext({})
 
 export const ThemeProvider = ({ children }) => {
-    const [colorScheme, setColorScheme] = useState(Appearance.getColorScheme())
+    const [colorScheme, setColorScheme] = /*useState(Appearance.getColorScheme())*/ useState('dark')
 
     const theme = colorScheme === 'dark'
         ? Colors.dark

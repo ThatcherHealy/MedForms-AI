@@ -1,15 +1,17 @@
 import { ThemeContext } from "../contexts/ThemeContext";
-import { View, Text, StyleSheet, Modal, SafeAreaView, TextInput, Keyboard, ScrollView, Pressable, ActivityIndicator, Image, useWindowDimensions } from "react-native";
+import { View, Text, StyleSheet, Modal, SafeAreaView, TextInput, Keyboard, ScrollView, Pressable, ActivityIndicator, Image, useWindowDimensions, Alert, Linking } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useContext, useState, useEffect, useMemo } from "react";
+import { useContext, useState, useEffect, useMemo, useRef } from "react";
 import { useNavigation } from "expo-router";
-import { app, auth } from "@/firebaseSetup";
+import { app, auth, deleteUser } from "@/firebaseSetup";
 import {createUserWithEmailAndPassword, signInWithEmailAndPassword} from "firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Font from "expo-font";
 import { useRouter } from "expo-router";
 import { sendPasswordResetEmail, sendEmailVerification } from "firebase/auth";
 import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCat, logInToRevenueCat, restorePurchases} from "@/RevenueCatConfig";
+import KeyboardAvoidingContainer from "@/Components/KeyboardAvoidingContainer";
+
 
 
     export default function Login()
@@ -25,10 +27,15 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
     const [loading, setLoading] = useState(false);
     const [user, setUser] = useState();
     const [showModal, setShowModal] = useState(false);
+    const deletingRef = useRef(false);
 
     const [offerings, setOfferings] = useState(null);
     const [customerInfo, setCustomerInfo] = useState(null);
     const [subscriptionPackage, setSubscriptionPackage] = useState(null);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+
 
       const { width, height } = useWindowDimensions();
       const scaleFactor = useMemo(() => width / 390, [width]);
@@ -71,8 +78,11 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
 
           if(subscribed)
           {
+            if(!deletingRef.current)
+            {
             console.log("✅ User is signed in and subscribed:", user.email);
             router.replace("/home");
+            }
           }
           else
           {
@@ -113,9 +123,15 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
 
     return(
     <>
+    <KeyboardAvoidingContainer scrollEnabled = {false}>
+
     <View style = {{backgroundColor: theme.background2, flex: 1}}>
         <SafeAreaView style = {styles.upperContainer}>
           <Image source = {colorScheme === 'dark' ? require('../assets/images/medforms ai font.png') : require('../assets/images/medforms ai font_blackpng.png') } style = {styles.logoImage}/>
+          <View style = {{flexDirection: "row", marginBottom: 50, marginTop: -15, width: "100%", alignItems: "center", justifyContent: "center"}}>
+            <Text style = {[styles.highlightText, {paddingHorizontal: 0, marginTop: 0}]}>By Clinicians,</Text>
+            <Text style = {[styles.highlightText, {color: theme.text, paddingHorizontal: 0, marginTop: 0}]}> For Clinicians</Text>
+          </View>
         </SafeAreaView>
 
           <View style={styles.container}>
@@ -134,17 +150,31 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
       </View>
 
       {/* Password Input */}
-      <View style={styles.inputContainer}>
+      <View style={[styles.inputContainer]}>
         <Text style={styles.label}>Password</Text>
         <TextInput
-          style={[styles.input, { color: password ? theme.text : theme.lightText, fontSize: scaleFontSize(14, scaleFactor) }]}
+          style={[styles.input, { color: password ? theme.text : theme.lightText, fontSize: scaleFontSize(14, scaleFactor), paddingRight: 20  }]}
           placeholder="Enter your password"
           placeholderTextColor={theme.lightText}
-          secureTextEntry
+          secureTextEntry = {!showPassword}
           value={password}
           onChangeText={setPassword}
           returnKeyType="done"
         />
+         <Pressable onPress={() => setShowPassword(!showPassword)} style={{ 
+      position: 'absolute',
+      size: scaleFontSize(20, scaleFactor),
+      right: 10,
+      top: height * 0.048,
+      justifyContent: 'center',
+      alignItems: 'center',
+    }}>
+          <Ionicons 
+            name={showPassword ? 'eye' : 'eye-off'} 
+            size={scaleFontSize(20, scaleFactor)} 
+            color={theme.lightText} 
+          />
+        </Pressable>
         {displayForgotPassword()}
       </View>
 
@@ -163,15 +193,6 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
               </Text>
             </Pressable>
 
-            <View style={styles.footer}>
-                <Text style={styles.footerText}>
-                    {signUp ? `Already have an account?${" "}` : `Don't have an account?${" "}`}
-                    <Text style={[styles.signUpText]} onPress={() => setSignUp(!signUp)}>
-                    {signUp ? "Sign in here" : "Sign up here"}
-                    </Text>
-                </Text>
-            </View>
-
 
             <Modal
         visible={showModal}
@@ -179,10 +200,14 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
         transparent
       >
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
 
+          <View style={styles.modalContent}>
+          <ScrollView 
+      contentContainerStyle={[ styles.modalContent, {flexGrow: 1} ]} 
+      showsVerticalScrollIndicator={true}
+    >
           <Ionicons
-            style={{position: 'absolute', top: 15, right: 15, color: theme.lightText}}
+            style={{position: 'absolute', top: 0, right: 0, color: theme.lightText}}
             name="close-circle-outline"
             size= {scaleFontSize(30, scaleFactor)}
             onPress={() => {
@@ -190,8 +215,9 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
               deleteAccount()}}
           ></Ionicons>
 
+
             <Text style={styles.modalTitle}>Start your MedForms AI subscription!</Text>
-            <Text style={styles.modalSubTitle}>1 Week Free • Then $9.99/Month</Text>
+            <Text style={styles.modalSubTitle}>1 Week Free • Then $4.99/Month</Text>
 
             <View style={styles.perksList} showsVerticalScrollIndicator={false}>
         <Text style={styles.perk}>✅ Instantly Generate Medical Forms</Text>
@@ -208,10 +234,7 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
             <Pressable style={[styles.continueButton, { backgroundColor: "transparent", paddingHorizontal: 5}]} onPress={() => handleRestorePurchases()}>
               <Text style={[styles.buttonText, { color: theme.lightText}]}>Restore Purchases</Text>
             </Pressable>
-
-            {/*<Pressable onPress={() => setShowModal(false)}>
-              <Text style={styles.cancelText}>Cancel</Text>
-            </Pressable>*/}
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -219,6 +242,24 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
 
     </View>
     </View>
+    </KeyboardAvoidingContainer>
+
+    <View style={styles.footer}>
+                    <View style={{flexDirection: "row", gap: 20, marginBottom: 10, alignItems: "center", justifyContent: "center"}}>
+                  <Text style = {styles.link} onPress={() => Linking.openURL('https://sites.google.com/view/medforms-ai-eula/home')}>
+                    Terms of Use
+                  </Text>
+                  <Text style={styles.link} onPress={() => Linking.openURL('https://sites.google.com/view/medforms-ai-privacy-policy-i/home')}>
+                    Privacy Policy
+                  </Text> 
+                    </View>
+                <Text style={styles.footerText}>
+                    {signUp ? `Already have an account?${" "}` : `Don't have an account?${" "}`}
+                    <Text style={[styles.signUpText]} onPress={() => setSignUp(!signUp)}>
+                    {signUp ? "Sign in here" : "Sign up here"}
+                    </Text>
+                </Text>
+            </View>
     </>
     );
 
@@ -226,9 +267,14 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
       if(!signUp)
       {
         return(
+          <>
           <Text style={[styles.signUpText, {alignSelf: "center", marginTop: 5}]} onPress={handlePasswordReset}>
             Forgot your password?
           </Text>
+          <Text style={[styles.signUpText, {alignSelf: "center", marginTop: 5/*, color: theme.lightText*/}]} onPress={handleDeleteAccount}>
+          Need to delete your account?
+        </Text>
+        </>
         )
       }
     }
@@ -240,14 +286,28 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
       <View style={styles.inputContainer}>
       <Text style={styles.label}>Confirm Password</Text>
       <TextInput
-        style={[styles.input, { color: password ? theme.text : theme.lightText, fontSize: scaleFontSize(14, scaleFactor) }]}
+        style={[styles.input, { color: password ? theme.text : theme.lightText, fontSize: scaleFontSize(14, scaleFactor), paddingRight: 20 }]}
         placeholder="Enter the same password"
         placeholderTextColor={theme.lightText}
-        secureTextEntry
+        secureTextEntry = {!showConfirmPassword}
         value={confirmPassword}
         onChangeText={setConfirmPassword}
         returnKeyType="done"
       />
+      <Pressable onPress={() => setShowConfirmPassword(!showConfirmPassword)} style={{ 
+      position: 'absolute',
+      size: scaleFontSize(20, scaleFactor),
+      right: 10,
+      top: height * 0.048,
+      justifyContent: 'center',
+      alignItems: 'center',
+    }}>
+          <Ionicons 
+            name={showConfirmPassword ? 'eye' : 'eye-off'} 
+            size={scaleFontSize(20, scaleFactor)} 
+            color={theme.lightText} 
+          />
+        </Pressable>
       {displayForgotPassword()}
     </View>
           )
@@ -356,6 +416,66 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
         console.error("❌ Password reset error:", error.message);
       }
     }
+    async function handleDeleteAccount() {
+      deletingRef.current = true;
+      if (!email || !password) {
+        alert("Please enter the email and password of the account you wish to delete.");
+        setDeleting(false);
+      }
+      else{
+      try{
+        await signInWithEmailAndPassword(auth, email, password);
+            console.log("Deleting account...");
+            Alert.alert("Warning",
+              "Deleting your account will not cancel your subscription if it's active. To stop being charged, cancel your subscription by pressing Manage Subscription or going to: Settings App > Apple Account > Subscriptions.",
+              [
+                {
+                  text: "Back",
+                  style: "cancel",
+                },
+                {
+                  text: "Delete Account",
+                  style: "destructive",
+                  onPress: async () => {
+                    try {
+                      const user = auth.currentUser;
+                      if (user) {
+                        await deleteUser(user);
+                        alert("User account successfully deleted.");
+                        router.replace("/login");
+                      }
+                    } catch (error) {
+                      alert(error.message);
+                    }
+                  },
+                },
+              ],
+              { cancelable: true }
+            );
+            
+
+      }
+      catch (error) {
+        // Handle different errors
+        switch (error.code) {
+          case "auth/user-not-found":
+            alert("No user found with this email.");
+            break;
+            case "auth/invalid-email":
+              alert("Invalid email format.");
+              break;            
+          case "auth/invalid-credential":
+            alert("Invalid email or password.");
+            break;
+          default:
+            alert("Couldn't find account. Please try again.");
+        }
+      }
+      finally{
+        deletingRef.current = false;
+      }
+    }
+    }
     async function deleteAccount() {
       let payingUser = false;
       if(await hasActiveSubscription(customerInfo))
@@ -364,7 +484,9 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
         }
       if (user && !payingUser) {
         try {
-          await user.delete();
+          const user = auth.currentUser;
+          if (user) {
+            await deleteUser(user);}
           console.log('🗑️ Deleted user account due to no subscription.');
         } catch (deleteError) {
           console.log('❌ Failed to delete user:', deleteError.message);
@@ -380,20 +502,23 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
       }
       try{
       setLoading(true);
-      newInfo = await purchaseSubscription(subscriptionPackage);
+      const newInfo = await purchaseSubscription(subscriptionPackage);
       setCustomerInfo(newInfo);
       setLoading(false);
+
+      const refreshedInfo = await getCustomerInfo(); // or RevenueCat.getCustomerInfo() if using the SDK
+      setCustomerInfo(refreshedInfo);
   
-      if (await hasActiveSubscription(newInfo)) 
+      if (await hasActiveSubscription(refreshedInfo)) 
       {
         console.log('✅ Subscription successful, routing to app');
-        setModalVisible(false);
-        router.replace('/home');
+        setShowModal(false);
+        router.replace("/home");
       } 
       else 
       {
-        alert('Subscription failed or was cancelled.');
-        deleteAccount();
+          alert('Subscription failed or was cancelled.');
+          deleteAccount();
       }
     }
     catch (error) {
@@ -412,8 +537,8 @@ import {getOfferings, getCustomerInfo, purchaseSubscription, initializeRevenueCa
       if (restored)
       {
         console.log('✅ Restoration successful, routing to app');
-        setModalVisible(false);
-        router.replace('/home');
+        setShowModal(false);
+        router.replace("/home");
       }
       else
       {
@@ -471,13 +596,15 @@ function createStyles(theme, width, height, scaleFontSize, scaleFactor) {
         justifyContent: "flex-start",
         alignItems: "center",
         backgroundColor: theme.background2,
+        resizeMode: "contain",
       },
       logoImage: {
         height: height * 0.11,
         width:  width * 0.9,
-        resizeMode: 'contain', //Allow image to ignore its aspect ratio
+        aspectRatio: 3.9,
+        resizeMode: "stretch", //Allow image to ignore its aspect ratio
         marginTop: 50,
-        marginBottom: 50,
+        marginBottom: 0,
       },
       title: {
         fontSize: scaleFontSize(48, scaleFactor), // Increased size
@@ -512,6 +639,14 @@ function createStyles(theme, width, height, scaleFontSize, scaleFactor) {
         padding: 10,
         fontFamily: "QuicksandMedium",
         backgroundColor: theme.background1,
+      },
+      link: {
+        fontSize: scaleFontSize(14, scaleFactor),
+        marginTop: 10,
+        color: theme.lightText,
+        fontFamily: "QuicksandMedium",
+        textAlign: "center",
+        textDecorationLine: "underline",
       },
       button: {
         backgroundColor: '#4CAF50', // Green background
@@ -554,17 +689,18 @@ function createStyles(theme, width, height, scaleFontSize, scaleFactor) {
       },
       modalContent: {
         width: '100%',
-        height: '75%', // Makes it almost full-screen
+        height: '78%', // Makes it almost full-screen
         backgroundColor: theme.background1,
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
-        padding: 20,
+        paddingHorizontal: 10,
+        paddingVertical: 15,
         alignItems: 'center',
         elevation: 10,
       },
       modalTitle: {
         fontSize: scaleFontSize(22, scaleFactor),
-        marginTop: 20,
+        marginTop: 0,
         marginBottom: 20,
         color: theme.text, 
         fontFamily: "QuicksandBold",
@@ -588,9 +724,9 @@ function createStyles(theme, width, height, scaleFontSize, scaleFactor) {
         marginTop: 10
       },
       perksList: {
-        width: '100%',
+        width: '95%',
         paddingHorizontal: 10,
-        marginBottom: 40,
+        marginBottom: 30,
       },
       perk: {
         fontSize: scaleFontSize(16, scaleFactor),
@@ -604,6 +740,14 @@ function createStyles(theme, width, height, scaleFontSize, scaleFactor) {
         color: theme.lightText,
         fontFamily: "QuicksandMedium",
         textAlign: 'center',
+      },
+      highlightText:{
+        fontFamily: 'QuicksandMedium',
+        paddingHorizontal: 30,
+        fontSize: scaleFontSize(18, scaleFactor),
+        marginTop: 10,
+        marginBottom: 5,
+        color: theme.changingHighlight
       },
       
   });

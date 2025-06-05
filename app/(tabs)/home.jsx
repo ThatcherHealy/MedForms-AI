@@ -137,7 +137,7 @@
     };
 
     useEffect(() => {
-      const checkMyVariable = async () => {
+      const checkReturnForm = async () => {
         try {
           // Retrieve 'ReturnForm' from AsyncStorage
           const storedValue = await AsyncStorage.getItem('ReturnForm');
@@ -151,7 +151,7 @@
       };
   
       // Run the check when the component mounts
-      checkMyVariable();
+      checkReturnForm();
     }, []);
     
     useEffect(() => {
@@ -259,6 +259,11 @@
       <KeyboardAvoidingContainer>
           <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 20 }}>
           <Image source = {colorScheme === 'dark' ? require('../../assets/images/medforms ai font.png') : require('../../assets/images/medforms ai font_blackpng.png') } style = {styles.logoImage}/>
+          <View style = {{flexDirection: "row", marginBottom: 20, marginTop: -20, alignItems: "center", justifyContent: "center"}}>
+            <Text style = {[styles.highlightText, {paddingHorizontal: 0, marginTop: 0}]}>By Clinicians,</Text>
+            <Text style = {[styles.highlightText, {color: theme.text, paddingHorizontal: 0, marginTop: 0}]}> For Clinicians</Text>
+          </View>
+            
             <SelectList 
             
               style={{ alignItems: 'center', justifyContent: 'center', marginTop: 20 }}
@@ -270,7 +275,7 @@
 
               boxStyles={{
                 width: width * 0.7, 
-                height: height * 0.101, 
+                height: selected == 4 ? height * 0.101 : height * 0.09, 
                 paddingVertical: 22,
                 justifyContent: 'center',
                 alignItems: 'center',
@@ -315,7 +320,7 @@
       return(
         <SafeAreaView style={{flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.background2}}>
           <ActivityIndicator size="large" color = {theme.changingHighlight} />
-          <Text style={[styles.highlightText, marginTop = -5]}>Generating Form...</Text>
+          <Text style={[styles.highlightText, marginTop = -5]}>Preparing your document...</Text>
         </SafeAreaView>
       )
     }
@@ -597,7 +602,8 @@
       <Pressable
         style={[
           styles.button,
-          !allFieldsFilled && { backgroundColor: theme.inactiveButton }, // Gray button if not all fields are filled
+          {paddingHorizontal: 5},
+          !allFieldsFilled && { backgroundColor: theme.inactiveButton}, // Gray button if not all fields are filled
         ]}
         onPress={async() => {
           if (allFieldsFilled && !fetching) {
@@ -613,7 +619,7 @@
         disabled={!allFieldsFilled} // Disable button if not all fields are filled
       >
         <Text style={styles.buttonText}>
-          Generate
+          {/*Generate*/}{`Prepare Document`}
         </Text>
       </Pressable>
     );
@@ -1096,7 +1102,9 @@ Insurance Denial Reason: ${formValues["reasonForAppeal1"]}`
       logoImage: {
         height: height * 0.11,
         width:  width * 0.9,
-        resizeMode: 'contain', //Allow image to ignore its aspect ratio
+        aspectRatio: 3.9,
+        resizeMode: "stretch", //Allow image to ignore its aspect ratio
+        marginBottom: 0,
       },
       text:{
         fontFamily: 'QuicksandMedium',

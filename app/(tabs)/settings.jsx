@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useContext, useMemo } from "react";
-import { View, Text, StyleSheet, Switch, SafeAreaView, TextInput, Keyboard, ScrollView, useWindowDimensions, Pressable } from "react-native";
+import { View, Text, StyleSheet, Switch, SafeAreaView, TextInput, Keyboard, ScrollView, useWindowDimensions, Pressable, Alert, Linking } from "react-native";
 import * as Font from "expo-font";
 import { ThemeContext } from "../../contexts/ThemeContext";
 import AsyncStorage from "@react-native-async-storage/async-storage"; // Import AsyncStorage
-import { auth } from "@/firebaseSetup";
-import { signOut } from "firebase/auth";
+import { auth, deleteUser } from "@/firebaseSetup";
+import { signOut, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { useRouter } from "expo-router";  
 import { ManageSubscription} from "@/RevenueCatConfig";
 
@@ -145,8 +145,11 @@ export default function Settings() {
               <Pressable style={[styles.logoutButton, { marginLeft: 20}]} onPress={handleSignOut}>
                 <Text style={styles.logoutText}>Log Out</Text>
               </Pressable>
-
             </View>
+            <Pressable style={[styles.logoutButton, {height: height * 0.02, backgroundColor: theme.background1, marginBottom: -3}]} 
+            onPress={handleDeleteAccount}>
+                <Text style={[styles.logoutText, {color: "red"}]}>Delete Account</Text>
+              </Pressable>
         </View>
 
         <Text style={styles.themeLabel}>Theme</Text>
@@ -217,12 +220,65 @@ export default function Settings() {
               handleInputChange("contactInfo", text)
             }
           />
+
         </View>
+          <View style = {{alignItems: "center"}}>
+            <Text style = {styles.link} onPress={() => Linking.openURL('https://sites.google.com/view/medforms-ai-eula/home')}>
+              Terms of Use
+            </Text>
+            <Text style={styles.link} onPress={() => Linking.openURL('https://sites.google.com/view/medforms-ai-privacy-policy-i/home')}>
+              Privacy Policy
+            </Text>
+          </View>
       </View>
       </ScrollView>
       </View>
     </SafeAreaView>
   );
+
+  async function handleDeleteAccount() {
+    console.log("Deleting account...");
+    Alert.alert("Warning",
+      "Deleting your account will not cancel your subscription. To stop being charged, cancel your subscription by pressing Manage Subscription or going to: Settings App > Apple Account > Subscriptions.",
+      [
+        {
+          text: "Back",
+          style: "cancel",
+        },
+        {
+          text: "Delete Account",
+          style: "destructive",
+          onPress: async () => {
+              Alert.prompt(
+                'Enter Password',
+                'Please enter your password to confirm:',
+                async password => {
+                  try {
+                  console.log('User entered:', password);
+                  const user = auth.currentUser;
+                  const credential = EmailAuthProvider.credential(user.email, password);
+                  await reauthenticateWithCredential(user, credential);
+                  if (user) {
+                    await deleteUser(user);
+                    alert("User account successfully deleted.");
+                    router.replace("/login");
+                  }
+                }
+                catch (error) {
+                  alert(error.message);
+                }
+              },
+                'secure-text', // hides the input (password style)
+                '', // default value (empty)
+                'default' // keyboardType
+              );
+            
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  }
 
   async function handleSignOut() {
     try {
@@ -238,9 +294,10 @@ export default function Settings() {
     try {
       await ManageSubscription();
     } catch (error) {
-      console.error("There was an error reaching your subscription. Navigate to it through Settings App > Apple Account > Subscriptions.");
+      console.error(error);
     }
   }
+
 }
 
 function createStyles(theme, width, height, scaleFontSize, scaleFactor) {
@@ -295,6 +352,14 @@ function createStyles(theme, width, height, scaleFontSize, scaleFactor) {
       fontFamily: "QuicksandMedium",
       width: width * 0.4,
       marginLeft: 5
+    },
+    link: {
+      fontSize: scaleFontSize(14, scaleFactor),
+      marginTop: 10,
+      color: theme.lightText,
+      fontFamily: "QuicksandMedium",
+      textAlign: "center",
+      textDecorationLine: "underline",
     },
     input: {
       borderWidth: 1,

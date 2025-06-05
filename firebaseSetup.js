@@ -1,5 +1,5 @@
 import { initializeApp, getApps} from "firebase/app";
-import { getAuth, initializeAuth, getReactNativePersistence } from "firebase/auth";
+import { getAuth, initializeAuth, getReactNativePersistence, deleteUser } from "firebase/auth";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -15,13 +15,13 @@ const firebaseConfig = {
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 
 // Initialize Auth only once
-const auth = initializeAuth(app, {
+const auth = initializeAuth(app/*, {
   persistence: getReactNativePersistence(AsyncStorage),
-});
+}*/);
 
 //Get Functions
 const functions = getFunctions(app);
 
 console.log("🔥 Firebase App Initialized:", app.name);
 
-export { app, auth, functions, httpsCallable };
+export { app, auth, functions, httpsCallable, deleteUser };

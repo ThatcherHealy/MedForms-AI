@@ -57,16 +57,16 @@ const ManageSubscription = async () => {
         await Linking.openURL(customerInfo.managementURL);
         console.log("🔗 Opened subscription management page.");
       } else {
-        alert("Unable to open the subscription management page.");
+        alert("There was an error reaching your subscription. Navigate to it through: Settings App > Apple Account > Subscriptions.");
       }
     } else {
-      alert("No management URL available for this user.");
+      alert("There was an error reaching your subscription. Navigate to it through: Settings App > Apple Account > Subscriptions.");
       console.warn("⚠️ managementURL is undefined in customerInfo");
     }
 
   } catch (error) {
     console.error("❌ Error fetching customer info for unsubscribe:", error);
-    alert("Something went wrong. Please try again later.");
+    alert("There was an error reaching your subscription. Navigate to it through: Settings App > Apple Account > Subscriptions.");
   }
 };
 const restorePurchases = async () => {
