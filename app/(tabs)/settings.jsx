@@ -118,7 +118,7 @@ export default function Settings() {
                 showsVerticalScrollIndicator={false}
               >  
 
-      <View style={[styles.lowerContainer, {marginBottom: 400}]}>
+      <View style={[styles.lowerContainer, {marginBottom: 300}]}>
 
 
         <Text style={styles.themeLabel}>Account</Text>
@@ -129,7 +129,7 @@ export default function Settings() {
               Email
             </Text>
             <View style={{ flex: 1, alignItems: "flex-end" }}>
-              <Text style={[styles.settingText, {width: width * 0.7, color: theme.lightText, flexShrink: 1, textAlign: "right"}]}
+              <Text style={[styles.settingText, {width: width * 0.56, color: theme.lightText, flexShrink: 1, textAlign: "right"}]}
                         numberOfLines={1} 
                         ellipsizeMode="middle"
                         >

@@ -234,6 +234,9 @@ import KeyboardAvoidingContainer from "@/Components/KeyboardAvoidingContainer";
             <Pressable style={[styles.continueButton, { backgroundColor: "transparent", paddingHorizontal: 5}]} onPress={() => handleRestorePurchases()}>
               <Text style={[styles.buttonText, { color: theme.lightText}]}>Restore Purchases</Text>
             </Pressable>
+            <Pressable style={[styles.continueButton, { backgroundColor: "transparent", paddingHorizontal: 5, marginTop: -15}]} onPress={() => Linking.openURL('https://apps.apple.com/redeem?code=Ramon')}>
+              <Text style={[styles.buttonText, { color: theme.lightText}]}>Redeem a Code</Text>
+            </Pressable>
             </ScrollView>
           </View>
         </View>
